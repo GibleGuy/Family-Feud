@@ -1,29 +1,26 @@
 /**
- * Sound placeholder module for Family Feud.
- * Replace the console.log calls with actual Audio playback when ready.
- *
- * Usage:
- *   playSound('reveal');
- *   playSound('strike');
- *   playSound('award');
- *   playSound('theme');
- *   playSound('round-start');
+ * Sound Manager module for Family Feud.
+ * Maps keys to MP3 files and handles sound triggers (including overlaps).
  */
 
 const SoundEffects = (() => {
-  // Map sound names to audio file paths (fill in later)
+  // Map sound names to actual audio files in SoundEffects/Regular
   const soundMap = {
-    'reveal': null,     // e.g., 'assets/sounds/ding.mp3'
-    'strike': null,     // e.g., 'assets/sounds/buzzer.mp3'
-    'award': null,      // e.g., 'assets/sounds/applause.mp3'
-    'theme': null,      // e.g., 'assets/sounds/theme.mp3'
-    'round-start': null // e.g., 'assets/sounds/round-start.mp3'
+    'intro': 'SoundEffects/Regular/Intro.mp3',
+    'new-round': 'SoundEffects/Regular/New_Round.mp3',
+    'game-win': 'SoundEffects/Regular/GameWin.mp3',
+    'commercial-back': 'SoundEffects/Regular/Commercial_Back.mp3',
+    'reveal': 'SoundEffects/Regular/Correct_Answer.mp3',
+    'strike': 'SoundEffects/Regular/Incorrect_Buzzer.mp3',
+    'sudden-death': 'SoundEffects/Regular/Sudden_Death.mp3'
   };
 
-  const audioCache = {};
+  // Cache to track the most recently started Audio instance for each key (useful to pause it)
+  const activeAudioCache = {};
 
   /**
    * Play a named sound effect.
+   * Creates a new Audio instance every time to allow concurrent overlapping.
    * @param {string} name - The sound name key
    */
   function playSound(name) {
@@ -33,12 +30,8 @@ const SoundEffects = (() => {
       return;
     }
 
-    if (!audioCache[name]) {
-      audioCache[name] = new Audio(path);
-    }
-
-    const audio = audioCache[name];
-    audio.currentTime = 0;
+    const audio = new Audio(path);
+    activeAudioCache[name] = audio; // cache reference to stop it later if requested
     audio.play().catch(err => {
       console.warn(`[Sound] Failed to play "${name}":`, err);
     });
@@ -49,9 +42,10 @@ const SoundEffects = (() => {
    * @param {string} name - The sound name key
    */
   function stopSound(name) {
-    if (audioCache[name]) {
-      audioCache[name].pause();
-      audioCache[name].currentTime = 0;
+    const audio = activeAudioCache[name];
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
     }
   }
 
@@ -62,13 +56,17 @@ const SoundEffects = (() => {
    */
   function registerSound(name, filePath) {
     soundMap[name] = filePath;
-    delete audioCache[name]; // Clear cache so it reloads
+    delete activeAudioCache[name];
   }
 
   return { playSound, stopSound, registerSound };
 })();
 
-// Convenience global
+// Convenience globals for back-compat
 function playSound(name) {
   SoundEffects.playSound(name);
+}
+
+function stopSound(name) {
+  SoundEffects.stopSound(name);
 }

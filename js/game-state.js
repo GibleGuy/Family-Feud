@@ -12,7 +12,8 @@ const GameState = (() => {
     1: { answerCount: 7, multiplier: 1 },
     2: { answerCount: 6, multiplier: 1 },
     3: { answerCount: 5, multiplier: 2 },
-    4: { answerCount: 4, multiplier: 3 }
+    4: { answerCount: 4, multiplier: 3 },
+    5: { answerCount: 3, multiplier: 3 }
   };
 
   // The central state
@@ -29,6 +30,7 @@ const GameState = (() => {
     strikeCount: 0,         // How many X's to show (1-3)
     gameStarted: false,
     questionVisible: false, // Hidden until Admin clicks "Show Question"
+    showRules: false,       // Display Sudden Death rules screen
     adminConnected: false
   };
 
@@ -109,6 +111,12 @@ const GameState = (() => {
         state.currentRound = msg.round;
         state.gameStarted = true;
         state.questionVisible = false;
+        state.showRules = false;
+        if (msg.round === 5) {
+          playSound('sudden-death');
+        } else {
+          playSound('new-round');
+        }
         notifyListeners();
         break;
 
@@ -171,6 +179,10 @@ const GameState = (() => {
         state.currentRound = msg.round || state.currentRound;
         state.gameStarted = false;
         state.questionVisible = false;
+        state.showRules = false;
+        if (state.currentRound === 5) {
+          playSound('sudden-death');
+        }
         notifyListeners();
         break;
 
@@ -188,6 +200,7 @@ const GameState = (() => {
           strikeCount: 0,
           gameStarted: false,
           questionVisible: false,
+          showRules: false,
           adminConnected: state.adminConnected
         };
         notifyListeners();
@@ -203,6 +216,19 @@ const GameState = (() => {
         state.family1.name = msg.family1Name;
         state.family2.name = msg.family2Name;
         notifyListeners();
+        break;
+
+      case 'SET_RULES_VISIBLE':
+        state.showRules = msg.visible;
+        notifyListeners();
+        break;
+
+      case 'PLAY_SOUND':
+        playSound(msg.soundName);
+        break;
+
+      case 'STOP_SOUND':
+        stopSound(msg.soundName);
         break;
     }
   }
@@ -289,6 +315,18 @@ const GameState = (() => {
     }
   }
 
+  function setRulesVisible(visible) {
+    send({ type: 'SET_RULES_VISIBLE', visible });
+  }
+
+  function triggerSound(soundName) {
+    send({ type: 'PLAY_SOUND', soundName });
+  }
+
+  function stopTriggerSound(soundName) {
+    send({ type: 'STOP_SOUND', soundName });
+  }
+
   return {
     init,
     getState,
@@ -306,6 +344,9 @@ const GameState = (() => {
     resetGame,
     updateScores,
     updateNames,
-    broadcastFullState
+    broadcastFullState,
+    setRulesVisible,
+    triggerSound,
+    stopTriggerSound
   };
 })();

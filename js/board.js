@@ -23,6 +23,7 @@ const Board = (() => {
       roundIndicator: document.getElementById('round-indicator'),
       welcomeState: document.getElementById('welcome-state'),
       gameBoard: document.getElementById('game-board'),
+      rulesState: document.getElementById('rules-state'),
       openAdminBtn: document.getElementById('open-admin-btn')
     };
 
@@ -75,13 +76,28 @@ const Board = (() => {
       lastQuestionStr = state.question;
     }
 
-    // Toggle views: whenever a question is loaded, show the board
-    if (state.gameStarted && state.question) {
-      showGameBoard();
-      document.body.classList.add('game-active');
+    // Toggle views: rules, game board, or welcome screen
+    if (state.showRules) {
+      els.welcomeState.style.display = 'none';
+      els.gameBoard.style.display = 'none';
+      els.rulesState.style.display = 'flex';
+      if (els.questionDisplay.parentElement) {
+        els.questionDisplay.parentElement.style.setProperty('display', 'none', 'important');
+      }
     } else {
-      showWelcome();
-      document.body.classList.remove('game-active');
+      if (els.rulesState) {
+        els.rulesState.style.display = 'none';
+      }
+      if (els.questionDisplay.parentElement) {
+        els.questionDisplay.parentElement.style.display = '';
+      }
+      if (state.gameStarted && state.question) {
+        showGameBoard();
+        document.body.classList.add('game-active');
+      } else {
+        showWelcome();
+        document.body.classList.remove('game-active');
+      }
     }
 
     // Toggle admin button visibility

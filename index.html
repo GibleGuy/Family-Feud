@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
   <meta name="description" content="Family Feud Live Game Board — Main display for TV/projector">
   <link rel="stylesheet" href="css/board.css">
 </head>
+
 <body>
 
   <!-- ===== Background Spotlight overlay ===== -->
@@ -19,7 +21,7 @@
   <!-- ===== Top Bar: Bank & Admin Button ===== -->
   <div class="top-bar">
     <div></div> <!-- left empty spacer for grid alignment symmetry -->
-    
+
     <div class="bank-display">
       <div class="bank-score" id="bank-score">0</div>
       <div class="multiplier-badge" id="multiplier-badge">2× POINTS</div>
@@ -74,6 +76,21 @@
         </div>
       </div>
 
+      <!-- Sudden Death Rules State -->
+      <div class="rules-state" id="rules-state" style="display: none; flex-direction: column; width: 100%;">
+        <div class="rules-title">SUDDEN DEATH RULES</div>
+        <div class="rules-divider">
+          <span class="dot"></span>
+          <span class="line"></span>
+          <span class="diamond">♦</span>
+          <span class="line"></span>
+          <span class="dot"></span>
+        </div>
+        <div class="rules-body">In Sudden Death, the first player to buzz in must guess the Number One answer to
+          instantly win the game. If they guess a lower-ranked answer, their opponent gets one chance to steal the
+          victory by giving a higher-ranked answer!</div>
+      </div>
+
     </div>
 
     <!-- Team 2 Panel (right flank) -->
@@ -96,4 +113,5 @@
   <script src="js/board.js"></script>
 
 </body>
+
 </html>

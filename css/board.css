@@ -583,6 +583,85 @@ body:not(.game-active) .question-wrapper {
   text-transform: uppercase;
 }
 
+/* ---------- Sudden Death Rules State ---------- */
+.rules-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px;
+  gap: 10px;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.rules-state .rules-title {
+  font-family: var(--font-ui);
+  font-size: 3.2rem;
+  font-weight: 900;
+  background: linear-gradient(
+    to right,
+    var(--red-strike) 0%,
+    #ff6b6b 25%,
+    var(--gold) 50%,
+    var(--red-strike) 75%,
+    var(--red-strike) 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 4px 20px rgba(232, 32, 32, 0.4)) drop-shadow(0 2px 2px rgba(0, 0, 0, 0.9));
+  letter-spacing: 4px;
+  margin-bottom: 5px;
+  animation: pulseLogo 3s infinite ease-in-out, shimmerText 6s linear infinite;
+}
+
+.rules-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 80%;
+  max-width: 450px;
+  margin: 5px auto 20px;
+}
+
+.rules-divider .line {
+  flex: 1;
+  height: 2px;
+  background: linear-gradient(to right, transparent, var(--red-strike), transparent);
+  box-shadow: 0 0 8px var(--red-strike);
+}
+
+.rules-divider .dot {
+  width: 6px;
+  height: 6px;
+  background-color: var(--red-strike);
+  border-radius: 50%;
+  box-shadow: 0 0 10px var(--red-strike);
+}
+
+.rules-divider .diamond {
+  color: var(--gold-bright);
+  font-size: 1.2rem;
+  line-height: 1;
+  text-shadow: 0 0 10px var(--gold);
+  animation: pulseDiamond 2s infinite ease-in-out;
+}
+
+.rules-state .rules-body {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  font-family: var(--font-ui);
+  text-align: center;
+  max-width: 680px;
+  line-height: 1.45;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
 /* ---------- Round Indicator ---------- */
 .round-indicator {
   position: absolute;
