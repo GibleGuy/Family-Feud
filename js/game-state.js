@@ -6,6 +6,7 @@
 const GameState = (() => {
   const CHANNEL_NAME = 'family-feud';
   let channel = null;
+  let myRole = null;
 
   // Round config: which round uses how many answers, and the bank multiplier
   const ROUND_CONFIG = {
@@ -54,6 +55,7 @@ const GameState = (() => {
    * @param {'admin'|'board'} role
    */
   function init(role) {
+    myRole = role;
     channel = new BroadcastChannel(CHANNEL_NAME);
 
     if (role === 'board') {
@@ -88,6 +90,12 @@ const GameState = (() => {
     }
   }
 
+  function triggerLocalSound(name) {
+    if (myRole === 'board') {
+      playSound(name);
+    }
+  }
+
   function handleMessage(msg) {
     switch (msg.type) {
       case 'ADMIN_CONNECTED':
@@ -113,9 +121,9 @@ const GameState = (() => {
         state.questionVisible = false;
         state.showRules = false;
         if (msg.round === 5) {
-          playSound('sudden-death');
+          triggerLocalSound('sudden-death');
         } else {
-          playSound('new-round');
+          triggerLocalSound('new-round');
         }
         notifyListeners();
         break;
@@ -133,7 +141,7 @@ const GameState = (() => {
           if (ans.revealed) {
             state.revealedIndices.push(msg.index);
             state.bankScore += ans.points;
-            playSound('reveal');
+            triggerLocalSound('reveal');
           } else {
             state.revealedIndices = state.revealedIndices.filter(i => i !== msg.index);
             state.bankScore -= ans.points;
@@ -146,7 +154,7 @@ const GameState = (() => {
         state.strikes += msg.count;
         state.showStrike = true;
         state.strikeCount = msg.count;
-        playSound('strike');
+        triggerLocalSound('strike');
         notifyListeners();
         // Auto-hide strike after animation
         setTimeout(() => {
@@ -163,7 +171,7 @@ const GameState = (() => {
         } else {
           state.family2.score += awardedPoints;
         }
-        playSound('award');
+        triggerLocalSound('award');
         notifyListeners();
         break;
       }
@@ -181,7 +189,7 @@ const GameState = (() => {
         state.questionVisible = false;
         state.showRules = false;
         if (state.currentRound === 5) {
-          playSound('sudden-death');
+          triggerLocalSound('sudden-death');
         }
         notifyListeners();
         break;
@@ -224,11 +232,13 @@ const GameState = (() => {
         break;
 
       case 'PLAY_SOUND':
-        playSound(msg.soundName);
+        triggerLocalSound(msg.soundName);
         break;
 
       case 'STOP_SOUND':
-        stopSound(msg.soundName);
+        if (myRole === 'board') {
+          stopSound(msg.soundName);
+        }
         break;
     }
   }

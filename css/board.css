@@ -697,16 +697,24 @@ body:not(.game-active) .question-wrapper {
 }
 
 .strike-x {
-  font-size: 20rem;
+  font-size: 16rem;
   font-weight: 900;
   font-family: var(--font-ui);
   color: var(--red-strike);
-  text-shadow:
+  border: 15px solid var(--red-strike);
+  border-radius: 16px;
+  width: 280px;
+  height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  background: rgba(0, 0, 0, 0.85);
+  box-shadow: 
     0 0 40px rgba(232, 32, 32, 0.8),
-    0 0 80px rgba(232, 32, 32, 0.5),
-    4px 4px 0 #8b0000;
+    inset 0 0 20px rgba(232, 32, 32, 0.4);
   animation: strikeShake 0.15s ease-in-out 3;
-  filter: drop-shadow(0 0 30px rgba(232, 32, 32, 0.6));
+  text-shadow: 0 0 20px rgba(232, 32, 32, 0.6);
 }
 
 /* ---------- Animations ---------- */
@@ -776,8 +784,13 @@ body:not(.game-active) .question-wrapper {
   .answer-pill { height: 32px; min-width: 50px; }
   .answer-text { font-size: 1rem; }
   .answer-points { font-size: 1.3rem; }
-  .answer-points-box { width: 60px; }
-  .strike-x { font-size: 14rem; }
+  .strike-x { 
+    font-size: 11rem; 
+    width: 200px;
+    height: 200px;
+    border-width: 10px;
+    border-radius: 12px;
+  }
   .light-board-backdrop { height: 75vh; }
 }
 

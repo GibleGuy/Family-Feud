@@ -257,7 +257,7 @@ const Board = (() => {
     for (let i = 0; i < count; i++) {
       const x = document.createElement('span');
       x.className = 'strike-x';
-      x.textContent = '✕';
+      x.textContent = 'X';
       overlay.appendChild(x);
     }
 
