@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Family Feud — Admin Panel</title>
+  <meta name="description" content="Family Feud Live Admin Panel — Host controls for managing the game">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+
+  <!-- ===== Header ===== -->
+  <header class="admin-header">
+    <h1>🎯 Family Feud — Host Panel</h1>
+    <p class="subtitle">Control the game board from here. The audience doesn't see this window.</p>
+  </header>
+
+  <!-- ===== Status Bar ===== -->
+  <div class="status-bar">
+    <div>
+      <span class="status-dot"></span>
+      <span id="status-round">Round 1</span>
+    </div>
+    <div class="status-scores">
+      <span id="status-f1">Family 1: 0</span>
+      <span>|</span>
+      <span id="status-f2">Family 2: 0</span>
+    </div>
+  </div>
+
+  <!-- ===== CSV Upload ===== -->
+  <div class="section">
+    <div class="section-title">
+      <span class="icon">📁</span> Load Questions
+    </div>
+    <div class="file-drop-zone" id="file-drop-zone">
+      <input type="file" id="csv-file-input" accept=".csv" multiple>
+      <div class="drop-icon">📂</div>
+      <div class="drop-text">Drop CSV files here or click to browse</div>
+      <div class="drop-hint">Supports multiple files — loads all questions by answer count</div>
+    </div>
+    <div class="loaded-files" id="loaded-files"></div>
+  </div>
+
+  <!-- ===== Round Selector ===== -->
+  <div class="section">
+    <div class="section-title">
+      <span class="icon">🔄</span> Select Round
+    </div>
+    <div class="round-tabs">
+      <div class="round-tab active" data-round="1">
+        <span class="round-num">1</span>
+        <span class="round-info">7 answers · 1×</span>
+      </div>
+      <div class="round-tab" data-round="2">
+        <span class="round-num">2</span>
+        <span class="round-info">6 answers · 1×</span>
+      </div>
+      <div class="round-tab" data-round="3">
+        <span class="round-num">3</span>
+        <span class="round-info">5 answers · 2×</span>
+      </div>
+      <div class="round-tab" data-round="4">
+        <span class="round-num">4</span>
+        <span class="round-info">4 answers · 3×</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Question Picker ===== -->
+  <div class="section">
+    <div class="section-title">
+      <span class="icon">❓</span> Pick Question
+    </div>
+    <div class="question-picker">
+      <div class="select-wrap" style="flex: 0 0 130px;">
+        <label for="answer-count-select">Answers</label>
+        <select id="answer-count-select">
+          <option value="7">7 Answers</option>
+          <option value="6">6 Answers</option>
+          <option value="5">5 Answers</option>
+          <option value="4">4 Answers</option>
+          <option value="3">3 Answers</option>
+        </select>
+      </div>
+      <div class="select-wrap">
+        <label for="question-select">Question</label>
+        <select id="question-select">
+          <option value="">-- Load a CSV first --</option>
+        </select>
+      </div>
+      <button class="btn btn-orange btn-sm" id="random-question-btn" title="Pick a random question">🎲 Random</button>
+      <button class="btn btn-blue btn-sm" id="load-question-btn">▶ Load locally</button>
+      <button class="btn btn-green btn-sm" id="show-question-btn" disabled>👁 Show on Board</button>
+    </div>
+    <div class="question-count" id="question-count">No questions loaded</div>
+  </div>
+
+  <!-- ===== Game Controls (hidden until question loaded) ===== -->
+  <div id="game-controls" class="hidden">
+
+    <!-- Active Question -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">📋</span> Active Question
+      </div>
+      <div class="active-question" id="active-question">No question loaded</div>
+
+      <!-- Answer Buttons -->
+      <div class="admin-answer-grid" id="admin-answer-grid">
+        <!-- Populated by JS -->
+      </div>
+
+      <div class="controls-row mt-12">
+        <button class="btn btn-purple btn-sm" id="reveal-all-btn">👁 Reveal All Remaining</button>
+      </div>
+    </div>
+
+    <!-- Strikes -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">❌</span> Strikes
+      </div>
+      <div class="controls-row">
+        <button class="btn btn-red" id="strike-1-btn">✕ Strike</button>
+        <button class="btn btn-red" id="strike-2-btn">✕✕ Double Strike</button>
+        <button class="btn btn-red" id="strike-3-btn">✕✕✕ Triple Strike</button>
+      </div>
+    </div>
+
+    <!-- Bank & Award Points -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">🏆</span> Award Points
+      </div>
+      <div class="bank-info">
+        <div class="bank-value" id="admin-bank-value">0</div>
+        <div class="bank-meta">
+          Points in Bank
+          <br>
+          <span class="bank-multiplied" id="admin-bank-multiplied" style="display: none;"></span>
+        </div>
+      </div>
+      <div class="award-buttons">
+        <button class="btn btn-green btn-lg" id="award-family1-btn">Award to Family 1</button>
+        <button class="btn btn-blue btn-lg" id="award-family2-btn">Award to Family 2</button>
+      </div>
+      <div class="controls-row mt-12">
+        <div class="spacer"></div>
+        <button class="btn btn-red" id="reset-game-btn">🔄 Reset to Title</button>
+        <button class="btn btn-orange" id="next-round-btn">Next Round ▶</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== Score Override ===== -->
+  <div class="section">
+    <div class="section-title">
+      <span class="icon">✏️</span> Score Override
+    </div>
+    <div class="score-override">
+      <div class="score-field">
+        <label for="admin-family1-score">Family 1 Score</label>
+        <input type="number" id="admin-family1-score" value="0">
+      </div>
+      <div class="score-field">
+        <label for="admin-family2-score">Family 2 Score</label>
+        <input type="number" id="admin-family2-score" value="0">
+      </div>
+      <button class="btn btn-purple btn-sm" id="update-scores-btn">Update</button>
+    </div>
+  </div>
+
+  <!-- ===== Scripts ===== -->
+  <script src="js/csv-parser.js"></script>
+  <script src="js/sounds.js"></script>
+  <script src="js/game-state.js"></script>
+  <script src="js/admin.js"></script>
+
+</body>
+</html>

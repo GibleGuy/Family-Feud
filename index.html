@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Family Feud — Game Board</title>
+  <meta name="description" content="Family Feud Live Game Board — Main display for TV/projector">
+  <link rel="stylesheet" href="css/board.css">
+</head>
+<body>
+
+  <!-- ===== Background Spotlight overlay ===== -->
+  <div class="backdrop"></div>
+  <div class="light-board-backdrop"></div>
+
+  <!-- ===== Strike Overlay ===== -->
+  <div class="strike-overlay" id="strike-overlay"></div>
+
+  <!-- ===== Top Bar: Bank & Admin Button ===== -->
+  <div class="top-bar">
+    <div></div> <!-- left empty spacer for grid alignment symmetry -->
+    
+    <div class="bank-display">
+      <div class="bank-score" id="bank-score">0</div>
+      <div class="multiplier-badge" id="multiplier-badge">2× POINTS</div>
+    </div>
+
+    <div class="admin-btn-wrapper">
+      <button id="open-admin-btn" class="open-admin-btn">⚙️ Open Admin Panel</button>
+    </div>
+  </div>
+
+  <!-- ===== Question Display Area ===== -->
+  <div class="question-wrapper">
+    <div class="question-display" id="question-display">The question is...</div>
+  </div>
+
+  <!-- ===== Main Content ===== -->
+  <div class="main-content">
+
+    <!-- Team 1 Panel (left flank) -->
+    <div class="team-panel left-flank">
+      <div class="team-name-box">
+        <input type="text" class="family-name-input" id="family1-name" value="TEAM 1" maxlength="16">
+      </div>
+      <div class="team-score-box">
+        <div class="team-score-value" id="family1-score">0</div>
+      </div>
+    </div>
+
+    <!-- Answer Board -->
+    <div class="board-container">
+
+      <!-- Welcome / Idle State -->
+      <div class="welcome-state" id="welcome-state">
+        <div class="logo-text">FAMILY FEUD</div>
+        <div class="welcome-divider">
+          <span class="dot"></span>
+          <span class="line"></span>
+          <span class="diamond">♦</span>
+          <span class="line"></span>
+          <span class="dot"></span>
+        </div>
+        <div class="subtitle">Waiting for host to start a round…</div>
+      </div>
+
+      <!-- Active Game Board -->
+      <div id="game-board" style="display: none; flex-direction: column; width: 100%;">
+        <div class="board-frame" id="board-frame">
+          <div class="answer-grid" id="answer-grid">
+            <!-- Answer cards injected by JS -->
+          </div>
+          <div class="round-indicator" id="round-indicator">ROUND 1</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Team 2 Panel (right flank) -->
+    <div class="team-panel right-flank">
+      <div class="team-name-box">
+        <input type="text" class="family-name-input" id="family2-name" value="TEAM 2" maxlength="16">
+      </div>
+      <div class="team-score-box">
+        <div class="team-score-value" id="family2-score">0</div>
+      </div>
+    </div>
+
+  </div>
+
+
+
+  <!-- ===== Scripts ===== -->
+  <script src="js/sounds.js"></script>
+  <script src="js/game-state.js"></script>
+  <script src="js/board.js"></script>
+
+</body>
+</html>

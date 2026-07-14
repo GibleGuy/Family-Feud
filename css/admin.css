@@ -1,0 +1,493 @@
+/* ======================================================
+   FAMILY FEUD - ADMIN PANEL STYLES
+   Clean, functional control panel for the host
+   ====================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --bg-dark: #111827;
+  --bg-card: #1f2937;
+  --bg-card-hover: #273548;
+  --bg-input: #374151;
+  --border: #374151;
+  --border-focus: #60a5fa;
+  --blue: #3b82f6;
+  --blue-hover: #2563eb;
+  --green: #10b981;
+  --green-hover: #059669;
+  --red: #ef4444;
+  --red-hover: #dc2626;
+  --orange: #f59e0b;
+  --orange-hover: #d97706;
+  --purple: #8b5cf6;
+  --purple-hover: #7c3aed;
+  --text-primary: #f9fafb;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
+  --gold: #f5d06b;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  font-family: var(--font);
+  background: var(--bg-dark);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+
+body {
+  padding: 20px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* ---------- Header ---------- */
+.admin-header {
+  text-align: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.admin-header h1 {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--gold);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.admin-header .subtitle {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* ---------- Section Cards ---------- */
+.section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.section-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-title .icon {
+  font-size: 1rem;
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 18px;
+  font-family: var(--font);
+  font-size: 0.85rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn:active {
+  transform: scale(0.96);
+}
+
+.btn-blue {
+  background: var(--blue);
+  color: white;
+}
+.btn-blue:hover { background: var(--blue-hover); }
+
+.btn-green {
+  background: var(--green);
+  color: white;
+}
+.btn-green:hover { background: var(--green-hover); }
+
+.btn-red {
+  background: var(--red);
+  color: white;
+}
+.btn-red:hover { background: var(--red-hover); }
+
+.btn-orange {
+  background: var(--orange);
+  color: #111;
+}
+.btn-orange:hover { background: var(--orange-hover); }
+
+.btn-purple {
+  background: var(--purple);
+  color: white;
+}
+.btn-purple:hover { background: var(--purple-hover); }
+
+.btn-sm {
+  padding: 7px 14px;
+  font-size: 0.78rem;
+}
+
+.btn-lg {
+  padding: 14px 28px;
+  font-size: 1rem;
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ---------- Inputs & Selects ---------- */
+input[type="text"],
+input[type="number"],
+select {
+  font-family: var(--font);
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  outline: none;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+
+input:focus, select:focus {
+  border-color: var(--border-focus);
+}
+
+select {
+  cursor: pointer;
+}
+
+label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* ---------- File Upload ---------- */
+.file-drop-zone {
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 30px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.file-drop-zone:hover,
+.file-drop-zone.drag-over {
+  border-color: var(--blue);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.file-drop-zone .drop-icon {
+  font-size: 2rem;
+  margin-bottom: 8px;
+}
+
+.file-drop-zone .drop-text {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.file-drop-zone .drop-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.file-drop-zone input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.loaded-files {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.loaded-file-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--green);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* ---------- Round Selector ---------- */
+.round-tabs {
+  display: flex;
+  gap: 6px;
+}
+
+.round-tab {
+  flex: 1;
+  padding: 10px;
+  text-align: center;
+  background: var(--bg-input);
+  border: 2px solid transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.round-tab:hover {
+  background: var(--bg-card-hover);
+}
+
+.round-tab.active {
+  border-color: var(--blue);
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--blue);
+}
+
+.round-tab .round-num {
+  display: block;
+  font-size: 1.2rem;
+  margin-bottom: 2px;
+}
+
+.round-tab .round-info {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.round-tab.active .round-info {
+  color: rgba(59, 130, 246, 0.7);
+}
+
+/* ---------- Question Picker ---------- */
+.question-picker {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.question-picker .select-wrap {
+  flex: 1;
+}
+
+.question-count {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+/* ---------- Active Question ---------- */
+.active-question {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+/* ---------- Answer Grid (Admin) ---------- */
+.admin-answer-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.admin-answer-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--bg-input);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--font);
+  color: var(--text-primary);
+}
+
+.admin-answer-btn:hover:not(.revealed) {
+  border-color: var(--green);
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.admin-answer-btn.revealed {
+  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.12);
+  opacity: 0.6;
+  cursor: default;
+}
+
+.admin-answer-btn .answer-rank {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  margin-right: 10px;
+  min-width: 20px;
+}
+
+.admin-answer-btn .answer-name {
+  flex: 1;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+.admin-answer-btn .answer-pts {
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: var(--gold);
+  min-width: 35px;
+  text-align: right;
+}
+
+/* ---------- Controls Row ---------- */
+.controls-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.controls-row .spacer {
+  flex: 1;
+}
+
+/* ---------- Score Override ---------- */
+.score-override {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.score-override .score-field {
+  flex: 1;
+}
+
+/* ---------- Bank Info ---------- */
+.bank-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(245, 208, 107, 0.08);
+  border: 1px solid rgba(245, 208, 107, 0.2);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+}
+
+.bank-info .bank-value {
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--gold);
+}
+
+.bank-info .bank-meta {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.bank-info .bank-multiplied {
+  font-weight: 800;
+  color: var(--orange);
+}
+
+/* ---------- Award Buttons ---------- */
+.award-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.award-buttons .btn {
+  flex: 1;
+  padding: 14px;
+  font-size: 0.9rem;
+}
+
+/* ---------- Status Bar ---------- */
+.status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 16px;
+  margin-bottom: 16px;
+  font-size: 0.8rem;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  display: inline-block;
+  margin-right: 8px;
+  animation: statusPulse 2s infinite;
+}
+
+@keyframes statusPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.status-scores {
+  display: flex;
+  gap: 16px;
+  font-weight: 700;
+}
+
+/* ---------- Utilities ---------- */
+.mt-12 { margin-top: 12px; }
+.mt-8 { margin-top: 8px; }
+.flex-center { display: flex; align-items: center; justify-content: center; }
+.hidden { display: none !important; }
