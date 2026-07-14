@@ -294,6 +294,17 @@ body:not(.game-active) .question-wrapper {
   padding: 20px 20px 20px;
 }
 
+/* Keep question + board as one stack; shorter boards (fewer answers)
+   should sit under the question instead of floating mid-viewport */
+body.game-active .main-content {
+  align-items: flex-start;
+  padding-top: 28px;
+}
+
+body.game-active .team-panel {
+  align-self: flex-start;
+}
+
 /* ---------- Team Panel Scoreboards (Flanking) ---------- */
 .team-panel {
   display: flex;
