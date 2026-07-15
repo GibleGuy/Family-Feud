@@ -25,9 +25,8 @@ const Admin = (() => {
       loadQuestionBtn: document.getElementById('load-question-btn'),
       activeQuestion: document.getElementById('active-question'),
       answerGrid: document.getElementById('admin-answer-grid'),
-      strike1Btn: document.getElementById('strike-1-btn'),
-      strike2Btn: document.getElementById('strike-2-btn'),
-      strike3Btn: document.getElementById('strike-3-btn'),
+      strikeBtn: document.getElementById('strike-btn'),
+      removeStrikeBtn: document.getElementById('remove-strike-btn'),
       strikeTally: document.getElementById('admin-strike-tally'),
       strikeMarks: document.getElementById('admin-strike-marks'),
       bankValue: document.getElementById('admin-bank-value'),
@@ -37,7 +36,10 @@ const Admin = (() => {
       nextRoundBtn: document.getElementById('next-round-btn'),
       family1ScoreInput: document.getElementById('admin-family1-score'),
       family2ScoreInput: document.getElementById('admin-family2-score'),
+      family1NameInput: document.getElementById('admin-family1-name'),
+      family2NameInput: document.getElementById('admin-family2-name'),
       updateScoresBtn: document.getElementById('update-scores-btn'),
+      updateNamesBtn: document.getElementById('update-names-btn'),
       statusRound: document.getElementById('status-round'),
       statusF1: document.getElementById('status-f1'),
       statusF2: document.getElementById('status-f2'),
@@ -254,10 +256,9 @@ const Admin = (() => {
       els.showQuestionBtn.disabled = true;
     });
 
-    // Strikes
-    els.strike1Btn.addEventListener('click', () => GameState.triggerStrike(1));
-    els.strike2Btn.addEventListener('click', () => GameState.triggerStrike(2));
-    els.strike3Btn.addEventListener('click', () => GameState.triggerStrike(3));
+    // Strikes — one press = one X; stack up to 3
+    els.strikeBtn.addEventListener('click', () => GameState.triggerStrike(1));
+    els.removeStrikeBtn.addEventListener('click', () => GameState.removeStrike());
 
     // Award points
     els.awardFamily1Btn.addEventListener('click', () => {
@@ -313,6 +314,20 @@ const Admin = (() => {
       const f2 = parseInt(els.family2ScoreInput.value) || 0;
       GameState.updateScores(f1, f2);
     });
+
+    // Family names
+    if (els.updateNamesBtn) {
+      els.updateNamesBtn.addEventListener('click', () => {
+        const f1 = (els.family1NameInput.value || 'Family 1').trim() || 'Family 1';
+        const f2 = (els.family2NameInput.value || 'Family 2').trim() || 'Family 2';
+        GameState.updateNames(f1, f2);
+      });
+      const commitNamesOnEnter = (e) => {
+        if (e.key === 'Enter') els.updateNamesBtn.click();
+      };
+      els.family1NameInput.addEventListener('keydown', commitNamesOnEnter);
+      els.family2NameInput.addEventListener('keydown', commitNamesOnEnter);
+    }
 
     // Sudden Death Rules Display
     els.toggleRulesBtn.addEventListener('click', () => {
@@ -418,17 +433,26 @@ const Admin = (() => {
     els.awardFamily1Btn.disabled = !canAward;
     els.awardFamily2Btn.disabled = !canAward;
 
-    // Strike tally
-    const strikeCount = Math.max(0, state.strikes || 0);
+    // Strike tally — 3 marks on the board; 4th strike is steal-miss only
+    const rawStrikes = Math.max(0, state.strikes || 0);
+    const strikeCount = Math.min(3, rawStrikes);
     if (els.strikeTally) {
-      els.strikeTally.textContent = `${Math.min(strikeCount, 3)} / 3`;
-      els.strikeTally.classList.toggle('strike-tally-max', strikeCount >= 3);
+      els.strikeTally.textContent = rawStrikes >= 4 ? '3 / 3 · steal miss' : `${strikeCount} / 3`;
+      els.strikeTally.classList.toggle('strike-tally-max', rawStrikes >= 3);
     }
     if (els.strikeMarks) {
       els.strikeMarks.querySelectorAll('.strike-mark').forEach((mark, i) => {
-        mark.classList.toggle('filled', i < Math.min(strikeCount, 3));
+        mark.classList.toggle('filled', i < strikeCount);
       });
     }
+    if (els.strikeBtn) {
+      els.strikeBtn.disabled = rawStrikes >= 4;
+      els.strikeBtn.title = rawStrikes === 3
+        ? 'Steal miss — shows a single X'
+        : 'Add one strike';
+      els.strikeBtn.textContent = rawStrikes === 3 ? '✕ Steal Miss' : '✕ Strike';
+    }
+    if (els.removeStrikeBtn) els.removeStrikeBtn.disabled = rawStrikes <= 0;
 
     // Update status bar
     els.statusRound.textContent = `Round ${state.currentRound}`;
@@ -463,6 +487,14 @@ const Admin = (() => {
     els.family1ScoreInput.value = state.family1.score;
     els.family2ScoreInput.value = state.family2.score;
 
+    // Sync name fields unless the host is typing
+    if (els.family1NameInput && document.activeElement !== els.family1NameInput) {
+      els.family1NameInput.value = state.family1.name;
+    }
+    if (els.family2NameInput && document.activeElement !== els.family2NameInput) {
+      els.family2NameInput.value = state.family2.name;
+    }
+
     // Update award button labels
     els.awardFamily1Btn.textContent = `Award to ${state.family1.name}`;
     els.awardFamily2Btn.textContent = `Award to ${state.family2.name}`;
@@ -481,7 +513,35 @@ const Admin = (() => {
     }
   }
 
-  return { init };
+  function loadActiveEpisodeRound() {
+    const roundData = EpisodeLibrary.getRound(currentRound);
+    if (!roundData || !roundData.question) {
+      alert(`Active episode has no question for Round ${currentRound}.`);
+      return;
+    }
+    if (!roundData.answers || !roundData.answers.length) {
+      alert(`Round ${currentRound} has no answers.`);
+      return;
+    }
+
+    currentQuestionData = {
+      question: roundData.question,
+      answers: roundData.answers.map(a => ({ text: a.text, points: a.points }))
+    };
+    questionLoaded = true;
+
+    GameState.loadQuestion(
+      currentQuestionData.question,
+      currentQuestionData.answers,
+      currentRound
+    );
+
+    renderAdminAnswers();
+    els.gameControls.classList.remove('hidden');
+    els.showQuestionBtn.disabled = false;
+  }
+
+  return { init, loadActiveEpisodeRound };
 })();
 
 document.addEventListener('DOMContentLoaded', Admin.init);

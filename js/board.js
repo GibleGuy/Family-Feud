@@ -7,6 +7,7 @@ const Board = (() => {
   // DOM element references (populated on init)
   let els = {};
   let lastQuestionStr = null;
+  let lastStrikeNonce = 0;
   let displayedTotal = 0;
   let totalAnimId = null;
   let timerRafId = null;
@@ -63,13 +64,7 @@ const Board = (() => {
   }
 
   function syncNames() {
-    const channel = new BroadcastChannel('family-feud');
-    channel.postMessage({
-      type: 'UPDATE_NAMES',
-      family1Name: els.family1Name.value,
-      family2Name: els.family2Name.value
-    });
-    channel.close();
+    GameState.updateNames(els.family1Name.value, els.family2Name.value);
   }
 
   function hideAllBoardViews() {
@@ -201,6 +196,10 @@ const Board = (() => {
 
       els.roundIndicator.textContent = `ROUND ${state.currentRound}`;
       renderAnswers(state, justLoaded);
+    }
+
+    // Persistent strike tally on the board (always synced, including Remove Strike)
+    if (!fm.active && state.gameStarted && state.question) {
       updateStrikeTally(state.strikes);
     } else if (els.boardStrikeTally) {
       els.boardStrikeTally.classList.add('hidden');
@@ -217,16 +216,20 @@ const Board = (() => {
       els.family2Name.value = state.family2.name;
     }
 
-    // Strikes
-    if (state.showStrike) {
-      showStrikes(state.strikeCount);
+    // Big strike overlay — cumulative Xs for strikes 1–3; single X for steal miss
+    if (state.showStrike && state.strikeNonce !== lastStrikeNonce) {
+      lastStrikeNonce = state.strikeNonce;
+      const overlayCount = state.strikes >= 4
+        ? 1
+        : Math.max(1, Math.min(3, state.strikeCount || state.strikes || 1));
+      showStrikes(overlayCount);
     }
   }
 
   function updateStrikeTally(strikes) {
     if (!els.boardStrikeTally) return;
     const count = Math.max(0, Math.min(3, strikes || 0));
-    els.boardStrikeTally.classList.toggle('hidden', !document.body.classList.contains('game-active'));
+    els.boardStrikeTally.classList.remove('hidden');
     els.boardStrikeTally.querySelectorAll('.board-strike-mark').forEach((mark, i) => {
       mark.classList.toggle('filled', i < count);
     });
@@ -419,9 +422,12 @@ const Board = (() => {
 
   function showStrikes(count) {
     const overlay = els.strikeOverlay;
+    const n = Math.max(1, Math.min(3, count || 1));
     overlay.innerHTML = '';
+    overlay.classList.remove('strike-count-1', 'strike-count-2', 'strike-count-3', 'active');
+    overlay.classList.add(`strike-count-${n}`);
 
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < n; i++) {
       const x = document.createElement('span');
       x.className = 'strike-x';
       x.textContent = 'X';
@@ -429,13 +435,15 @@ const Board = (() => {
     }
 
     // Trigger animation
-    overlay.classList.remove('active');
     void overlay.offsetWidth; // Force reflow
     overlay.classList.add('active');
 
-    // Remove after animation
+    // Remove after animation (ignore stale timers via nonce on class)
+    const token = lastStrikeNonce;
     setTimeout(() => {
-      overlay.classList.remove('active');
+      if (token === lastStrikeNonce) {
+        overlay.classList.remove('active');
+      }
     }, 1500);
   }
 

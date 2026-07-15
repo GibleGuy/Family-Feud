@@ -36,3 +36,19 @@ Edit the `.csv` files inside `Answers/` with Excel or Google Sheets. Format:
 `Question,Answer 1,#1,Answer 2,#2` …
 
 Fast Money uses `Answers/allQuestions.json`.
+
+## Custom Episodes
+
+Use the **Custom Episode Builder** on the Host Panel (`admin.html`) to create a full show (5 survey rounds + Fast Money), download it as CSV, upload later, and print host cue cards.
+
+Episode CSV format (one episode per file):
+
+```text
+section,slot,question,answer_1,points_1,...,answer_8,points_8
+EPISODE,,Episode Name,,,,,,,,,,,,,,
+ROUND,1,...,up to 8 answer pairs (blank slots skipped)
+...
+FM,5,...,up to 8 answer pairs
+```
+
+The builder always shows 8 answer slots per question; leave extras blank. Sample episodes live in `Answers/Episodes/`. On first load they appear in the Active Episode dropdown.

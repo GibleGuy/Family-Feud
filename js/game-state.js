@@ -50,7 +50,8 @@ const GameState = (() => {
     family1: { name: 'Family 1', score: 0 },
     family2: { name: 'Family 2', score: 0 },
     showStrike: false,      // Momentary flag for strike animation
-    strikeCount: 0,         // How many X's to show (1-3)
+    strikeCount: 0,         // How many X's to show on overlay (1-3, cumulative)
+    strikeNonce: 0,         // Bumps each new strike so the board replays animation
     gameStarted: false,
     questionVisible: false, // Hidden until Admin clicks "Show Question"
     showRules: false,       // Display Sudden Death rules screen
@@ -104,11 +105,13 @@ const GameState = (() => {
         if (msg.type === 'REQUEST_STATE') {
           broadcastFullState();
         }
-        if (msg.type === 'UPDATE_NAMES') {
-          state.family1.name = msg.family1Name;
-          state.family2.name = msg.family2Name;
-          notifyListeners();
-        }
+    // When board posts a name change, apply it and keep admin UI in sync.
+    // Admin-initiated name changes go through send() → handleMessage on both sides.
+    if (msg.type === 'UPDATE_NAMES') {
+      state.family1.name = msg.family1Name;
+      state.family2.name = msg.family2Name;
+      notifyListeners();
+    }
       };
     }
   }
@@ -163,6 +166,7 @@ const GameState = (() => {
         state.bankScore = 0;
         state.showStrike = false;
         state.strikeCount = 0;
+        state.strikeNonce = 0;
         state.currentRound = msg.round;
         state.gameStarted = true;
         state.questionVisible = false;
@@ -218,17 +222,36 @@ const GameState = (() => {
         }
         break;
 
-      case 'STRIKE':
-        state.strikes += msg.count;
+      case 'STRIKE': {
+        // Strikes 1–3 stack on the board. After 3, one more press is allowed for a
+        // failed steal — that flash shows a single X (not a 4th mark).
+        const add = Math.max(1, parseInt(msg.count, 10) || 1);
+        const prev = state.strikes || 0;
+        if (prev >= 4) break;
+
+        state.strikes = Math.min(4, prev + add);
+        // Steal miss (4th strike): show 1 X; otherwise show running total 1–3
+        state.strikeCount = state.strikes >= 4 ? 1 : state.strikes;
+        state.strikeNonce = (state.strikeNonce || 0) + 1;
         state.showStrike = true;
-        state.strikeCount = msg.count;
         triggerLocalSound('strike');
         notifyListeners();
-        // Auto-hide strike after animation
+        const nonceAtFlash = state.strikeNonce;
         setTimeout(() => {
-          state.showStrike = false;
-          notifyListeners();
+          if (state.strikeNonce === nonceAtFlash) {
+            state.showStrike = false;
+            notifyListeners();
+          }
         }, 1500);
+        break;
+      }
+
+      case 'REMOVE_STRIKE':
+        state.strikes = Math.max(0, (state.strikes || 0) - 1);
+        state.showStrike = false;
+        // Overlay count matches stacked strikes (1–3); steal slot has no tally mark
+        state.strikeCount = Math.min(3, state.strikes);
+        notifyListeners();
         break;
 
       case 'AWARD_POINTS': {
@@ -241,7 +264,7 @@ const GameState = (() => {
           state.family2.score += awardedPoints;
         }
         state.bankScore = 0;
-        triggerLocalSound('award');
+        triggerLocalSound('game-win');
         notifyListeners();
         break;
       }
@@ -259,6 +282,7 @@ const GameState = (() => {
         state.bankScore = 0;
         state.showStrike = false;
         state.strikeCount = 0;
+        state.strikeNonce = 0;
         state.currentRound = msg.round || state.currentRound;
         state.gameStarted = false;
         state.questionVisible = false;
@@ -278,10 +302,11 @@ const GameState = (() => {
           revealedIndices: [],
           strikes: 0,
           bankScore: 0,
-          family1: { name: 'Family 1', score: 0 },
-          family2: { name: 'Family 2', score: 0 },
+          family1: { name: state.family1.name, score: 0 },
+          family2: { name: state.family2.name, score: 0 },
           showStrike: false,
           strikeCount: 0,
+          strikeNonce: 0,
           gameStarted: false,
           questionVisible: false,
           showRules: false,
@@ -394,10 +419,14 @@ const GameState = (() => {
         if (pts === 0) {
           state.showStrike = true;
           state.strikeCount = 1;
+          state.strikeNonce = (state.strikeNonce || 0) + 1;
           triggerLocalSound('fm-survey-incorrect');
+          const nonceAtFlash = state.strikeNonce;
           setTimeout(() => {
-            state.showStrike = false;
-            notifyListeners();
+            if (state.strikeNonce === nonceAtFlash) {
+              state.showStrike = false;
+              notifyListeners();
+            }
           }, 1500);
         } else {
           triggerLocalSound('fm-survey-correct');
@@ -522,8 +551,12 @@ const GameState = (() => {
     send({ type: 'TOGGLE_ANSWER', index });
   }
 
-  function triggerStrike(count) {
-    send({ type: 'STRIKE', count });
+  function triggerStrike(count = 1) {
+    send({ type: 'STRIKE', count: count || 1 });
+  }
+
+  function removeStrike() {
+    send({ type: 'REMOVE_STRIKE' });
   }
 
   function awardPoints(familyNumber) {
@@ -666,6 +699,7 @@ const GameState = (() => {
     hideAnswer,
     toggleAnswer,
     triggerStrike,
+    removeStrike,
     awardPoints,
     setRound,
     resetRound,

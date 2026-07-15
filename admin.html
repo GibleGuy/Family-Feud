@@ -28,10 +28,62 @@
     </div>
   </div>
 
-  <!-- ===== CSV Upload ===== -->
-  <div class="section">
+  <!-- ===== Episode Library (select / upload) ===== -->
+  <div class="section" id="episode-library-section">
     <div class="section-title">
-      <span class="icon">📁</span> Load Questions
+      <span class="icon">🎬</span> Episodes
+      <span id="active-episode-badge" class="active-episode-badge hidden"></span>
+    </div>
+    <div class="episode-select-row">
+      <div class="select-wrap" style="flex: 1;">
+        <label for="episode-select">Active Episode</label>
+        <select id="episode-select">
+          <option value="">— Free play (question bank) —</option>
+        </select>
+      </div>
+      <button class="btn btn-sm" id="episode-clear-active-btn" title="Clear active episode">Clear</button>
+      <button class="btn btn-red btn-sm" id="episode-remove-btn" title="Remove from library">Remove</button>
+      <button class="btn btn-purple btn-sm" id="episode-print-cue-btn" title="Print host cue cards">🖨 Cue Cards</button>
+    </div>
+    <div class="file-drop-zone episode-upload-zone mt-12" id="episode-upload-zone">
+      <input type="file" id="episode-upload-input" accept=".csv" multiple>
+      <div class="drop-icon">📥</div>
+      <div class="drop-text">Upload episode CSV files</div>
+      <div class="drop-hint">One episode per file — from the Episode Builder download</div>
+    </div>
+  </div>
+
+  <!-- ===== Custom Episode Builder (collapsed by default) ===== -->
+  <details class="section collapsible-section" id="episode-builder-section">
+    <summary class="section-title collapsible-summary">
+      <span class="icon">🛠️</span> Custom Episode Builder
+      <span class="collapse-hint">Click to expand</span>
+    </summary>
+    <div class="collapsible-body">
+      <div class="episode-name-row">
+        <div class="select-wrap" style="flex: 1;">
+          <label for="episode-name-input">Episode Name</label>
+          <input type="text" id="episode-name-input" placeholder="e.g. Neighborhood BBQ Night">
+        </div>
+      </div>
+      <div id="episode-rounds-mount" class="episode-rounds-mount"></div>
+      <div class="section-title mt-12" style="margin-bottom: 10px;">
+        <span class="icon">⚡</span> Fast Money (5 questions)
+      </div>
+      <div id="episode-fm-mount" class="episode-rounds-mount"></div>
+      <div class="controls-row mt-12">
+        <button class="btn btn-green" id="episode-download-btn">⬇ Download CSV</button>
+        <button class="btn btn-blue" id="episode-save-library-btn">💾 Save to Library</button>
+        <button class="btn btn-orange btn-sm" id="episode-clear-btn">Clear Form</button>
+      </div>
+      <div id="episode-builder-status" class="episode-builder-status" aria-live="polite"></div>
+    </div>
+  </details>
+
+  <!-- ===== CSV Upload (question bank) ===== -->
+  <div class="section" id="question-bank-section">
+    <div class="section-title">
+      <span class="icon">📁</span> Load Questions (Free Play Bank)
     </div>
     <div class="file-drop-zone" id="file-drop-zone">
       <input type="file" id="csv-file-input" accept=".csv" multiple>
@@ -158,9 +210,14 @@
   </div>
 
   <!-- ===== Question Picker ===== -->
-  <div class="section">
+  <div class="section" id="question-picker-section">
     <div class="section-title">
       <span class="icon">❓</span> Pick Question
+    </div>
+    <div class="controls-row" style="margin-bottom: 12px;">
+      <button class="btn btn-green" id="load-episode-round-btn" disabled title="Select an episode first">
+        ▶ Load Episode Round
+      </button>
     </div>
     <div class="question-picker">
       <div class="select-wrap" style="flex: 0 0 130px;">
@@ -218,9 +275,8 @@
         <span class="strike-mark"></span>
       </div>
       <div class="controls-row">
-        <button class="btn btn-red" id="strike-1-btn">✕ Strike</button>
-        <button class="btn btn-red" id="strike-2-btn">✕✕ Double Strike</button>
-        <button class="btn btn-red" id="strike-3-btn">✕✕✕ Triple Strike</button>
+        <button class="btn btn-red" id="strike-btn">✕ Strike</button>
+        <button class="btn btn-orange" id="remove-strike-btn">↶ Remove Strike</button>
       </div>
     </div>
 
@@ -250,12 +306,23 @@
 
   </div>
 
-  <!-- ===== Score Override ===== -->
+  <!-- ===== Family Names & Score Override ===== -->
   <div class="section">
     <div class="section-title">
-      <span class="icon">✏️</span> Score Override
+      <span class="icon">✏️</span> Family Names &amp; Scores
     </div>
     <div class="score-override">
+      <div class="score-field">
+        <label for="admin-family1-name">Family 1 Name</label>
+        <input type="text" id="admin-family1-name" value="Family 1" maxlength="16">
+      </div>
+      <div class="score-field">
+        <label for="admin-family2-name">Family 2 Name</label>
+        <input type="text" id="admin-family2-name" value="Family 2" maxlength="16">
+      </div>
+      <button class="btn btn-blue btn-sm" id="update-names-btn">Update Names</button>
+    </div>
+    <div class="score-override mt-12">
       <div class="score-field">
         <label for="admin-family1-score">Family 1 Score</label>
         <input type="number" id="admin-family1-score" value="0">
@@ -264,7 +331,7 @@
         <label for="admin-family2-score">Family 2 Score</label>
         <input type="number" id="admin-family2-score" value="0">
       </div>
-      <button class="btn btn-purple btn-sm" id="update-scores-btn">Update</button>
+      <button class="btn btn-purple btn-sm" id="update-scores-btn">Update Scores</button>
     </div>
   </div>
 
@@ -285,12 +352,17 @@
     </div>
   </div>
 
+  <!-- ===== Host Cue Cards (print only) ===== -->
+  <div id="cue-cards-root" class="cue-cards-root" aria-hidden="true"></div>
+
   <!-- ===== Scripts ===== -->
   <script src="js/csv-parser.js"></script>
+  <script src="js/episode-format.js"></script>
   <script src="js/sounds.js"></script>
   <script src="js/game-state.js"></script>
   <script src="js/admin.js"></script>
   <script src="js/fast-money-admin.js"></script>
+  <script src="js/episode-builder.js"></script>
 
 </body>
 </html>

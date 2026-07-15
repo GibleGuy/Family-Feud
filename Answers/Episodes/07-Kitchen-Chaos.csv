@@ -1,0 +1,12 @@
+section,slot,question,answer_1,points_1,answer_2,points_2,answer_3,points_3,answer_4,points_4,answer_5,points_5,answer_6,points_6,answer_7,points_7
+EPISODE,,Kitchen Chaos,,,,,,,,,,,,,,
+ROUND,1,Name something you find in a kitchen drawer,Utensils,24,Knives,18,Spatula,14,Can Opener,12,Twine,8,Batteries,7,Takeout Menus,6
+ROUND,2,Name a reason dinner gets ruined,Burns,30,Undercooks,18,Spills,15,Forgets,14,Smoke Alarm,12,Raw,6,,
+ROUND,3,Name something that smells good while cooking,Garlic,28,Bacon,24,Onions,18,Bread,14,Cookies,10,,,,
+ROUND,4,Name a tool every cook needs,Knife,34,Pan,24,Spatula,18,Cutting Board,14,,,,,,
+ROUND,5,Name something greasy in the kitchen,Bacon,40,Butter,28,Oil,18,,,,,,,,
+FM,1,Name a spice in most kitchens,Salt,35,Pepper,28,Garlic,15,Paprika,10,Cinnamon,8,,
+FM,2,Name something that goes in the dishwasher,Plate,30,Glass,22,Fork,18,Bowl,15,Mug,10,,
+FM,3,Name a meal people eat for breakfast,Eggs,28,Cereal,22,Toast,18,Bacon,15,Pancakes,12,,
+FM,4,Name something fridge magnets hold up,Photos,32,Notes,25,Kids Art,18,Coupons,12,Calendar,8,,
+FM,5,Name a kitchen appliance you use every day,Microwave,30,Coffee Maker,25,Toaster,18,Fridge,15,Stove,10,,

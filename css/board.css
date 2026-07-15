@@ -755,6 +755,28 @@ body.game-active .team-panel {
   animation: strikeFlash 1.5s ease forwards;
 }
 
+.strike-overlay.strike-count-2 {
+  gap: 20px;
+}
+
+.strike-overlay.strike-count-2 .strike-x {
+  font-size: 12rem;
+  width: 210px;
+  height: 210px;
+  border-width: 12px;
+}
+
+.strike-overlay.strike-count-3 {
+  gap: 14px;
+}
+
+.strike-overlay.strike-count-3 .strike-x {
+  font-size: 9rem;
+  width: 160px;
+  height: 160px;
+  border-width: 10px;
+}
+
 .strike-x {
   font-size: 16rem;
   font-weight: 900;

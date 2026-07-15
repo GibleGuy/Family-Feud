@@ -782,3 +782,267 @@ label {
   border-color: var(--blue);
   background: rgba(59, 130, 246, 0.25);
 }
+
+/* ---------- Collapsible sections ---------- */
+.collapsible-section > .collapsible-summary {
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+  margin-bottom: 0;
+}
+
+.collapsible-section > .collapsible-summary::-webkit-details-marker {
+  display: none;
+}
+
+.collapsible-section > .collapsible-summary::after {
+  content: '▸';
+  margin-left: auto;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  transition: transform 0.15s ease;
+}
+
+.collapsible-section[open] > .collapsible-summary {
+  margin-bottom: 14px;
+}
+
+.collapsible-section[open] > .collapsible-summary::after {
+  transform: rotate(90deg);
+}
+
+.collapsible-section .collapse-hint {
+  margin-left: 8px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text-muted);
+}
+
+.collapsible-section[open] .collapse-hint {
+  display: none;
+}
+
+.collapsible-body {
+  padding-top: 2px;
+}
+
+/* ---------- Episode Library & Builder ---------- */
+.active-episode-badge {
+  margin-left: auto;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+  color: #111;
+  background: var(--gold);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.episode-select-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.episode-name-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.episode-rounds-mount {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.episode-round-card {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.episode-round-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.episode-round-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.episode-answers-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.episode-answer-row {
+  display: flex;
+  gap: 6px;
+}
+
+.episode-answer-row .ep-answer-text,
+.episode-answer-row .ep-fm-answer-text {
+  flex: 1;
+}
+
+.episode-answer-row .ep-answer-pts,
+.episode-answer-row .ep-fm-answer-pts {
+  width: 72px;
+  flex: 0 0 72px;
+  text-align: center;
+}
+
+.episode-builder-status {
+  margin-top: 12px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  min-height: 1.2em;
+}
+
+.episode-builder-status.error {
+  color: #fca5a5;
+}
+
+.episode-upload-zone {
+  padding: 18px;
+}
+
+@media (max-width: 640px) {
+  .episode-answers-grid {
+    grid-template-columns: 1fr;
+  }
+  .episode-select-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* ---------- Host Cue Cards (screen hidden; print layout) ---------- */
+.cue-cards-root {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: letter portrait;
+    margin: 0.6in;
+  }
+
+  html, body {
+    background: white !important;
+    color: #111 !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+  }
+
+  body > *:not(.cue-cards-root) {
+    display: none !important;
+  }
+
+  .cue-cards-root {
+    display: block !important;
+  }
+
+  .cue-print-header {
+    display: none;
+  }
+
+  .cue-page {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 0.35in;
+    min-height: 0;
+    page-break-after: always;
+    break-after: page;
+  }
+
+  .cue-page:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
+
+  .cue-card {
+    height: 4.6in;
+    max-height: 4.6in;
+    border: 2px solid #111;
+    border-radius: 4px;
+    padding: 16px 20px;
+    box-sizing: border-box;
+    overflow: hidden;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .cue-card-spacer {
+    border: none;
+    visibility: hidden;
+  }
+
+  .cue-card-label {
+    font-size: 11pt;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #333;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #999;
+    padding-bottom: 6px;
+  }
+
+  .cue-card-question {
+    font-size: 16pt;
+    font-weight: 800;
+    line-height: 1.25;
+    margin: 0 0 14px;
+    color: #000;
+  }
+
+  .cue-card-answers {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .cue-card-answers li {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 5px 0;
+    border-bottom: 1px dotted #bbb;
+    font-size: 12pt;
+  }
+
+  .cue-ans-rank {
+    flex: 0 0 1.5em;
+    font-weight: 800;
+    color: #444;
+  }
+
+  .cue-ans-text {
+    flex: 1;
+    font-weight: 600;
+  }
+
+  .cue-ans-pts {
+    flex: 0 0 2.5em;
+    text-align: right;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+}

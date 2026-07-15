@@ -27,7 +27,7 @@ A practical playbook for running a live show with the **Main Board** (TV / proje
 | Action | What to do |
 |--------|------------|
 | Correct answer | Click that answer in the Host Panel grid — it flips on the board and adds to the bank |
-| Wrong answer | Click **Strike** (or Double / Triple if needed) |
+| Wrong answer | Click **Strike** (each click adds one X up to 3; after 3, **Steal Miss** shows a single X) |
 | Accidental reveal | Use the small **×** on a revealed answer to hide it again |
 | End of round | Award the bank to the winning family, then **Next Round** |
 

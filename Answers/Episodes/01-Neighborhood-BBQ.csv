@@ -1,0 +1,12 @@
+section,slot,question,answer_1,points_1,answer_2,points_2,answer_3,points_3,answer_4,points_4,answer_5,points_5,answer_6,points_6,answer_7,points_7
+EPISODE,,Neighborhood BBQ Night,,,,,,,,,,,,,,
+ROUND,1,Name something you bring to a neighborhood BBQ,Burger,24,Hot Dog,18,Chips,14,Beer,12,Salad,10,Dessert,8,Sunscreen,6
+ROUND,2,Name a reason people argue at a backyard BBQ,Food not ready,28,Loud music,18,Kids fighting,15,Who grills,14,Parking,10,Pets,8,,
+ROUND,3,Name something you might burn on the grill,Burger,32,Hot Dog,22,Chicken,18,Steak,12,Marshmallow,10,,,,
+ROUND,4,Name a classic summer side dish,Potato Salad,36,Coleslaw,24,Corn,18,Baked Beans,14,,,,,,
+ROUND,5,Name something sticky at a picnic,Watermelon,42,BBQ Sauce,28,Honey,18,,,,,,,,
+FM,1,Name a condiment you put on a burger,Ketchup,40,Mustard,22,Mayo,15,Relish,10,Pickles,8,,
+FM,2,Name something you swat at outdoors,Mosquito,38,Fly,25,Bee,14,Wasp,12,Moth,6,,
+FM,3,Name a flavor of chips,BBQ,30,Sour Cream,22,Salt & Vinegar,18,Cheddar,15,Plain,10,,
+FM,4,Name something that might melt in the sun,Ice Cream,45,Chocolate,18,Butter,12,Candle,10,Makeup,8,,
+FM,5,Name a drink people bring to a BBQ,Beer,35,Soda,28,Lemonade,15,Water,12,Wine,6,,

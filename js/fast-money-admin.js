@@ -19,7 +19,10 @@ const FastMoneyAdmin = (() => {
       controls: document.getElementById('fast-money-controls'),
       surveyRoundSection: document.getElementById('survey-round-section'),
       rulesToggleSection: document.getElementById('rules-toggle-section'),
-      questionPickerSection: document.querySelector('.section:has(#question-select)') || null,
+      questionPickerSection: document.getElementById('question-picker-section') ||
+        document.querySelector('.section:has(#question-select)') || null,
+      episodeBuilderSection: document.getElementById('episode-builder-section'),
+      questionBankSection: document.getElementById('question-bank-section'),
       gameControls: document.getElementById('game-controls'),
       rows: document.getElementById('fm-question-rows'),
       timerDisplay: document.getElementById('fm-timer-display'),
@@ -117,7 +120,15 @@ const FastMoneyAdmin = (() => {
       els.exitBtnBottom.addEventListener('click', exitFastMoney);
     }
     els.rerandomizeBtn.addEventListener('click', () => {
-      fmQuestions = pickRandomQuestions(5);
+      const episodeFm = typeof EpisodeLibrary !== 'undefined' ? EpisodeLibrary.getFastMoney() : null;
+      if (episodeFm) {
+        fmQuestions = episodeFm.map(q => ({
+          question: q.question,
+          answers: q.answers.map(a => ({ text: a.text, points: a.points }))
+        }));
+      } else {
+        fmQuestions = pickRandomQuestions(5);
+      }
       GameState.resetFastMoneySlots();
       renderRows();
     });
@@ -171,21 +182,31 @@ const FastMoneyAdmin = (() => {
   }
 
   async function enterFastMoney() {
-    if (allQuestions.length === 0) {
-      await loadQuestionBank();
-    }
-    if (allQuestions.length === 0) {
-      alert(
-        'Could not load Answers/allQuestions.json.\n\n' +
-        (loadError ? `Reason: ${loadError}\n\n` : '') +
-        'Fix: close this Admin window, start the game with "Run Game (Windows).bat",\n' +
-        'open http://127.0.0.1:8192 , then click "Open Admin Panel" from the board.\n' +
-        'Do not open admin.html by double-clicking the file.'
-      );
-      return;
+    const episodeFm = typeof EpisodeLibrary !== 'undefined' ? EpisodeLibrary.getFastMoney() : null;
+
+    if (episodeFm) {
+      fmQuestions = episodeFm.map(q => ({
+        question: q.question,
+        answers: q.answers.map(a => ({ text: a.text, points: a.points }))
+      }));
+    } else {
+      if (allQuestions.length === 0) {
+        await loadQuestionBank();
+      }
+      if (allQuestions.length === 0) {
+        alert(
+          'Could not load Answers/allQuestions.json.\n\n' +
+          (loadError ? `Reason: ${loadError}\n\n` : '') +
+          'Fix: close this Admin window, start the game with "Run Game (Windows).bat",\n' +
+          'open http://127.0.0.1:8192 , then click "Open Admin Panel" from the board.\n' +
+          'Do not open admin.html by double-clicking the file.\n\n' +
+          'Or select a Custom Episode that includes Fast Money questions.'
+        );
+        return;
+      }
+      fmQuestions = pickRandomQuestions(5);
     }
 
-    fmQuestions = pickRandomQuestions(5);
     GameState.startFastMoney();
     GameState.resetFastMoneyTimer(20);
     setModeUI(true);
@@ -208,11 +229,23 @@ const FastMoneyAdmin = (() => {
     if (els.questionPickerSection) {
       els.questionPickerSection.classList.toggle('hidden', active);
     }
+    if (els.episodeBuilderSection) {
+      els.episodeBuilderSection.classList.toggle('hidden', active);
+    }
+    if (els.questionBankSection) {
+      els.questionBankSection.classList.toggle('hidden', active);
+    }
     if (els.gameControls && active) {
       els.gameControls.classList.add('hidden');
     }
     if (els.rulesToggleSection && active) {
       els.rulesToggleSection.style.display = 'none';
+    }
+
+    // Re-randomize label when episode locks the set
+    if (els.rerandomizeBtn) {
+      const episodeFm = typeof EpisodeLibrary !== 'undefined' ? EpisodeLibrary.getFastMoney() : null;
+      els.rerandomizeBtn.textContent = episodeFm ? '↺ Reload Episode Qs' : '🎲 Re-randomize';
     }
   }
 
