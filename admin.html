@@ -85,29 +85,53 @@
         <button class="btn btn-red" id="fm-exit-btn" style="flex: 1;">← Back to Main Game</button>
         <button class="btn btn-orange btn-sm" id="fm-rerandomize-btn">🎲 Re-randomize</button>
       </div>
-      <div class="controls-row mt-12">
-        <button class="btn btn-blue btn-sm" id="fm-player1-btn">Player 1 (20s)</button>
-        <button class="btn btn-sm" id="fm-player2-btn">Player 2 (25s)</button>
-      </div>
-      <div class="fm-timer-panel mt-12">
-        <div class="fm-timer-display" id="fm-timer-display">20.0</div>
-        <div class="fm-timer-controls">
-          <button class="btn btn-sm" id="fm-timer-20-btn">20s</button>
-          <button class="btn btn-sm" id="fm-timer-25-btn">25s</button>
-          <button class="btn btn-green btn-sm" id="fm-timer-play-btn">▶ Play</button>
-          <button class="btn btn-orange btn-sm" id="fm-timer-pause-btn">⏸ Pause</button>
-          <button class="btn btn-red btn-sm" id="fm-timer-reset-btn">↺ Reset</button>
-        </div>
-      </div>
-      <div class="controls-row mt-12">
-        <button class="btn btn-purple btn-sm" id="fm-hide-p1-btn">🙈 Hide Player 1 Board</button>
-        <button class="btn btn-purple btn-sm" id="fm-restore-p1-btn">👁 Restore Player 1 Board</button>
-        <button class="btn btn-red" id="fm-duplicate-btn" title="Keyboard: D">🔔 Duplicate Answer (D)</button>
-      </div>
-      <div class="fm-total-admin mt-12">
-        Running Total: <strong id="fm-admin-total">0</strong> / 200
-        <span id="fm-win-badge" class="hidden"> — WIN!</span>
-      </div>
+
+      <ol class="fm-steps mt-12">
+        <li class="fm-step" data-fm-step="1">
+          <div class="fm-step-label"><span class="fm-step-num">1</span> Player 1</div>
+          <div class="fm-step-hint">Select Player 1, start the 20s timer, and type their answers below.</div>
+          <div class="controls-row">
+            <button class="btn btn-blue btn-sm" id="fm-player1-btn">Player 1 (20s)</button>
+          </div>
+          <div class="fm-timer-panel mt-12">
+            <div class="fm-timer-display" id="fm-timer-display">20.0</div>
+            <div class="fm-timer-controls">
+              <button class="btn btn-sm" id="fm-timer-20-btn">20s</button>
+              <button class="btn btn-sm" id="fm-timer-25-btn">25s</button>
+              <button class="btn btn-green btn-sm" id="fm-timer-play-btn">▶ Play</button>
+              <button class="btn btn-orange btn-sm" id="fm-timer-pause-btn">⏸ Pause</button>
+              <button class="btn btn-red btn-sm" id="fm-timer-reset-btn">↺ Reset</button>
+            </div>
+          </div>
+        </li>
+
+        <li class="fm-step" data-fm-step="2">
+          <div class="fm-step-label"><span class="fm-step-num">2</span> Hide Player 1</div>
+          <div class="fm-step-hint">After Player 1 finishes, hide their board so Player 2 can’t see the answers.</div>
+          <div class="controls-row">
+            <button class="btn btn-purple btn-sm" id="fm-hide-p1-btn">🙈 Hide Player 1 Board</button>
+            <button class="btn btn-purple btn-sm" id="fm-restore-p1-btn">👁 Restore Player 1 Board</button>
+          </div>
+        </li>
+
+        <li class="fm-step" data-fm-step="3">
+          <div class="fm-step-label"><span class="fm-step-num">3</span> Player 2</div>
+          <div class="fm-step-hint">Switch to Player 2 (25s). Press <kbd>D</kbd> or Duplicate if they match Player 1.</div>
+          <div class="controls-row">
+            <button class="btn btn-sm" id="fm-player2-btn">Player 2 (25s)</button>
+            <button class="btn btn-red" id="fm-duplicate-btn" title="Keyboard: D">🔔 Duplicate Answer (D)</button>
+          </div>
+        </li>
+
+        <li class="fm-step" data-fm-step="4">
+          <div class="fm-step-label"><span class="fm-step-num">4</span> Reveal &amp; Score</div>
+          <div class="fm-step-hint">Reveal answers and points on the board using the rows below. Goal: 200 points.</div>
+          <div class="fm-total-admin">
+            Running Total: <strong id="fm-admin-total">0</strong> / 200
+            <span id="fm-win-badge" class="hidden"> — WIN!</span>
+          </div>
+        </li>
+      </ol>
     </div>
 
     <div class="section">
@@ -186,6 +210,12 @@
     <div class="section">
       <div class="section-title">
         <span class="icon">❌</span> Strikes
+        <span class="strike-tally" id="admin-strike-tally">0 / 3</span>
+      </div>
+      <div class="strike-tally-marks" id="admin-strike-marks" aria-hidden="true">
+        <span class="strike-mark"></span>
+        <span class="strike-mark"></span>
+        <span class="strike-mark"></span>
       </div>
       <div class="controls-row">
         <button class="btn btn-red" id="strike-1-btn">✕ Strike</button>

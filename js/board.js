@@ -17,6 +17,7 @@ const Board = (() => {
       bankScore: document.getElementById('bank-score'),
       bankLabel: document.getElementById('bank-label'),
       multiplierBadge: document.getElementById('multiplier-badge'),
+      boardStrikeTally: document.getElementById('board-strike-tally'),
       family1Name: document.getElementById('family1-name'),
       family1Score: document.getElementById('family1-score'),
       family2Name: document.getElementById('family2-name'),
@@ -200,6 +201,9 @@ const Board = (() => {
 
       els.roundIndicator.textContent = `ROUND ${state.currentRound}`;
       renderAnswers(state, justLoaded);
+      updateStrikeTally(state.strikes);
+    } else if (els.boardStrikeTally) {
+      els.boardStrikeTally.classList.add('hidden');
     }
 
     // Family scores
@@ -217,6 +221,15 @@ const Board = (() => {
     if (state.showStrike) {
       showStrikes(state.strikeCount);
     }
+  }
+
+  function updateStrikeTally(strikes) {
+    if (!els.boardStrikeTally) return;
+    const count = Math.max(0, Math.min(3, strikes || 0));
+    els.boardStrikeTally.classList.toggle('hidden', !document.body.classList.contains('game-active'));
+    els.boardStrikeTally.querySelectorAll('.board-strike-mark').forEach((mark, i) => {
+      mark.classList.toggle('filled', i < count);
+    });
   }
 
   function renderFastMoney(fm) {

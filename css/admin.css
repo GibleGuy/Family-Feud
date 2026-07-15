@@ -351,6 +351,7 @@ label {
   transition: all 0.15s;
   font-family: var(--font);
   color: var(--text-primary);
+  position: relative;
 }
 
 .admin-answer-btn:hover:not(.revealed) {
@@ -361,7 +362,7 @@ label {
 .admin-answer-btn.revealed {
   border-color: rgba(16, 185, 129, 0.4);
   background: rgba(16, 185, 129, 0.12);
-  opacity: 0.6;
+  opacity: 0.85;
   cursor: default;
 }
 
@@ -386,6 +387,94 @@ label {
   color: var(--gold);
   min-width: 35px;
   text-align: right;
+}
+
+.admin-answer-btn .answer-hide-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin-left: 8px;
+  border-radius: 4px;
+  background: rgba(232, 32, 32, 0.15);
+  border: 1px solid rgba(232, 32, 32, 0.45);
+  color: #ff6b6b;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.admin-answer-btn.revealed .answer-hide-btn {
+  display: inline-flex;
+}
+
+.admin-answer-btn .answer-hide-btn:hover {
+  background: rgba(232, 32, 32, 0.35);
+  border-color: #e82020;
+  color: #fff;
+}
+
+/* ---------- Strike tally (Admin) ---------- */
+.section-title .strike-tally {
+  margin-left: auto;
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--text-muted);
+}
+
+.section-title .strike-tally.strike-tally-max {
+  color: var(--red);
+}
+
+.strike-tally-marks {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.strike-tally-marks .strike-mark {
+  width: 28px;
+  height: 28px;
+  border: 2px solid rgba(232, 32, 32, 0.35);
+  border-radius: 6px;
+  position: relative;
+  opacity: 0.45;
+}
+
+.strike-tally-marks .strike-mark.filled {
+  opacity: 1;
+  border-color: #e82020;
+  background: rgba(232, 32, 32, 0.12);
+}
+
+.strike-tally-marks .strike-mark.filled::before,
+.strike-tally-marks .strike-mark.filled::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 16px;
+  height: 3px;
+  background: #e82020;
+  border-radius: 2px;
+}
+
+.strike-tally-marks .strike-mark.filled::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.strike-tally-marks .strike-mark.filled::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.award-buttons .btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 /* ---------- Controls Row ---------- */
@@ -493,6 +582,84 @@ label {
 .hidden { display: none !important; }
 
 /* ---------- Fast Money Admin ---------- */
+.fm-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fm-step {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  opacity: 0.72;
+  transition: opacity 0.15s, border-color 0.15s;
+}
+
+.fm-step.fm-step-active {
+  opacity: 1;
+  border-color: rgba(245, 158, 11, 0.55);
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.2);
+}
+
+.fm-step.fm-step-done {
+  opacity: 0.9;
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+.fm-step-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+}
+
+.fm-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(245, 158, 11, 0.2);
+  color: var(--gold);
+  font-size: 0.8rem;
+  font-weight: 900;
+}
+
+.fm-step-active .fm-step-num {
+  background: var(--orange);
+  color: #111;
+}
+
+.fm-step-done .fm-step-num {
+  background: rgba(16, 185, 129, 0.25);
+  color: var(--green);
+}
+
+.fm-step-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+
+.fm-step-hint kbd {
+  display: inline-block;
+  padding: 1px 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-card);
+  font-size: 0.72rem;
+  font-family: inherit;
+}
+
 .fm-timer-panel {
   display: flex;
   align-items: center;

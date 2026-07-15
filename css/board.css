@@ -230,7 +230,8 @@ body:not(.game-active) .question-wrapper {
   justify-self: center;
   transform: translateY(25px); /* overlap board top */
   min-width: 260px;
-  height: 100px;
+  min-height: 100px;
+  height: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -245,7 +246,7 @@ body:not(.game-active) .question-wrapper {
     0 10px 30px rgba(0, 0, 0, 0.8);
   border-radius: 14px;
   z-index: 15;
-  padding: 0 35px;
+  padding: 8px 35px 10px;
 }
 
 .bank-score {
@@ -280,6 +281,53 @@ body:not(.game-active) .question-wrapper {
 .multiplier-badge.visible {
   display: inline-block;
   animation: badgeGlow 2s ease-in-out infinite;
+}
+
+.board-strike-tally {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+  justify-content: center;
+}
+
+.board-strike-tally.hidden {
+  display: none;
+}
+
+.board-strike-mark {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(232, 32, 32, 0.35);
+  border-radius: 4px;
+  position: relative;
+  opacity: 0.4;
+}
+
+.board-strike-mark.filled {
+  opacity: 1;
+  border-color: var(--red-strike);
+  background: rgba(232, 32, 32, 0.15);
+  box-shadow: 0 0 8px rgba(232, 32, 32, 0.45);
+}
+
+.board-strike-mark.filled::before,
+.board-strike-mark.filled::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 12px;
+  height: 2px;
+  background: var(--red-strike);
+  border-radius: 1px;
+}
+
+.board-strike-mark.filled::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.board-strike-mark.filled::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
 }
 
 /* ---------- Main Content: Flanks + Board ---------- */
@@ -786,7 +834,7 @@ body.game-active .team-panel {
 @media (max-height: 750px) {
   .top-bar { height: 100px; padding-top: 10px; }
   .question-display { font-size: 1.2rem; min-height: 70px; }
-  .bank-display { height: 85px; min-width: 220px; bottom: -20px; }
+  .bank-display { height: auto; min-height: 85px; min-width: 220px; bottom: -20px; }
   .bank-score { font-size: 3.2rem; }
   .team-score-box { height: 90px; }
   .team-score-value { font-size: 3.5rem; }

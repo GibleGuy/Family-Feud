@@ -256,7 +256,7 @@ const FastMoneyAdmin = (() => {
         <div class="fm-row-inputs">
           <input type="text" class="fm-answer-input" placeholder="Player ${player} answer…" value="${escapeAttr(side.text || '')}" ${fm.won ? 'disabled' : ''}>
           <input type="number" class="fm-points-input" min="0" max="999" placeholder="Pts" value="${side.points != null ? side.points : ''}" ${fm.won ? 'disabled' : ''}>
-          <button type="button" class="btn btn-red btn-sm fm-zero-btn" ${fm.won ? 'disabled' : ''}>0</button>
+          <button type="button" class="btn btn-red btn-sm fm-zero-btn" title="Wrong / 0 pts" ${fm.won ? 'disabled' : ''}>0</button>
           <button type="button" class="btn btn-green btn-sm fm-reveal-btn" ${revealDisabled ? 'disabled' : ''}>${revealLabel}</button>
         </div>
         <div class="fm-answer-key">${keyChips}</div>
@@ -350,6 +350,29 @@ const FastMoneyAdmin = (() => {
 
   let lastRenderKey = '';
 
+  function updateFmSteps(fm) {
+    const steps = document.querySelectorAll('.fm-step');
+    if (!steps.length) return;
+
+    const anyRevealed = fm.slots.some(s =>
+      s.player1.textRevealed || s.player1.pointsRevealed ||
+      s.player2.textRevealed || s.player2.pointsRevealed
+    );
+
+    let activeStep = 1;
+    if (fm.currentPlayer === 2) {
+      activeStep = anyRevealed || fm.won ? 4 : 3;
+    } else if (fm.player1Hidden) {
+      activeStep = 2;
+    }
+
+    steps.forEach((step) => {
+      const n = parseInt(step.dataset.fmStep, 10);
+      step.classList.toggle('fm-step-active', n === activeStep);
+      step.classList.toggle('fm-step-done', n < activeStep);
+    });
+  }
+
   function onStateChange(state) {
     const fm = state.fastMoney;
     if (!fm) return;
@@ -366,6 +389,8 @@ const FastMoneyAdmin = (() => {
       els.hideP1Btn.disabled = fm.player1Hidden;
       els.restoreP1Btn.disabled = !fm.player1Hidden;
       els.duplicateBtn.disabled = fm.currentPlayer !== 2;
+
+      updateFmSteps(fm);
 
       // Rebuild rows when player / reveal / win / slot structure changes — not on every keystroke if focused
       const renderKey = [

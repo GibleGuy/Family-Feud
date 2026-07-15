@@ -28,6 +28,8 @@ const Admin = (() => {
       strike1Btn: document.getElementById('strike-1-btn'),
       strike2Btn: document.getElementById('strike-2-btn'),
       strike3Btn: document.getElementById('strike-3-btn'),
+      strikeTally: document.getElementById('admin-strike-tally'),
+      strikeMarks: document.getElementById('admin-strike-marks'),
       bankValue: document.getElementById('admin-bank-value'),
       bankMultiplied: document.getElementById('admin-bank-multiplied'),
       awardFamily1Btn: document.getElementById('award-family1-btn'),
@@ -56,7 +58,7 @@ const Admin = (() => {
     setupRoundTabs();
     setupControls();
 
-    selectRound(1);
+    selectRound(1, { commit: false });
     autoLoadCSVs();
   }
 
@@ -158,7 +160,10 @@ const Admin = (() => {
     });
   }
 
-  function selectRound(round) {
+  function selectRound(round, options = {}) {
+    const { commit = true } = options;
+    const state = GameState.getState();
+    const previousRound = currentRound;
     currentRound = round;
 
     // Update active tab
@@ -172,6 +177,22 @@ const Admin = (() => {
     }
 
     populateQuestionDropdown();
+
+    if (!commit) return;
+
+    // Sync live board round. If a question is already loaded for a different
+    // round, clear it so the host doesn't mix round multipliers / answer counts.
+    if (questionLoaded && previousRound !== round) {
+      GameState.resetRound(round);
+      questionLoaded = false;
+      currentQuestionData = null;
+      els.gameControls.classList.add('hidden');
+      els.showQuestionBtn.disabled = true;
+      els.activeQuestion.textContent = 'No question loaded';
+      els.answerGrid.innerHTML = '';
+    } else if (state.currentRound !== round) {
+      GameState.setRound(round);
+    }
   }
 
   function populateQuestionDropdown() {
@@ -250,10 +271,10 @@ const Admin = (() => {
     // Next round
     els.nextRoundBtn.addEventListener('click', () => {
       const nextRound = Math.min(currentRound + 1, 5);
-      GameState.resetRound(nextRound);
-      selectRound(nextRound);
       questionLoaded = false;
       currentQuestionData = null;
+      GameState.resetRound(nextRound);
+      selectRound(nextRound, { commit: false });
       els.gameControls.classList.add('hidden');
       els.showQuestionBtn.disabled = true;
       els.activeQuestion.textContent = 'No question loaded';
@@ -264,10 +285,10 @@ const Admin = (() => {
     if (els.resetGameBtn) {
       els.resetGameBtn.addEventListener('click', () => {
         if (confirm('Are you sure you want to completely reset back to the Title Screen?')) {
-          GameState.resetGame();
-          selectRound(1);
           questionLoaded = false;
           currentQuestionData = null;
+          GameState.resetGame();
+          selectRound(1, { commit: false });
           els.gameControls.classList.add('hidden');
           els.showQuestionBtn.disabled = true;
           els.activeQuestion.textContent = 'No question loaded';
@@ -342,6 +363,7 @@ const Admin = (() => {
       if (idx < totalAnswers) {
         const answer = currentQuestionData.answers[idx];
         const btn = document.createElement('button');
+        btn.type = 'button';
         btn.className = 'admin-answer-btn';
         btn.dataset.index = idx;
         const isRevealed = state.answers[idx] && state.answers[idx].revealed;
@@ -351,10 +373,19 @@ const Admin = (() => {
           <span class="answer-rank">#${idx + 1}</span>
           <span class="answer-name">${answer.text}</span>
           <span class="answer-pts">${answer.points}</span>
+          <span class="answer-hide-btn" title="Hide this answer" aria-label="Hide answer">×</span>
         `;
 
-        btn.addEventListener('click', () => {
-          GameState.toggleAnswer(idx);
+        btn.addEventListener('click', (e) => {
+          const hideBtn = e.target.closest('.answer-hide-btn');
+          if (hideBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            GameState.hideAnswer(idx);
+            return;
+          }
+          if (btn.classList.contains('revealed')) return;
+          GameState.revealAnswer(idx);
         });
 
         els.answerGrid.appendChild(btn);
@@ -372,12 +403,31 @@ const Admin = (() => {
     // Update bank display
     els.bankValue.textContent = state.bankScore;
     const config = GameState.getRoundConfig(state.currentRound);
-    if (config.multiplier > 1) {
-      els.bankMultiplied.textContent = `Awarded: ${state.bankScore * config.multiplier} pts (${config.multiplier}×)`;
+    if (config.multiplier > 1 && state.bankScore > 0) {
+      els.bankMultiplied.textContent = `Will award: ${state.bankScore * config.multiplier} pts (${config.multiplier}×)`;
+      els.bankMultiplied.style.display = 'inline';
+    } else if (config.multiplier > 1) {
+      els.bankMultiplied.textContent = `${config.multiplier}× round`;
       els.bankMultiplied.style.display = 'inline';
     } else {
       els.bankMultiplied.textContent = '';
       els.bankMultiplied.style.display = 'none';
+    }
+
+    const canAward = state.bankScore > 0;
+    els.awardFamily1Btn.disabled = !canAward;
+    els.awardFamily2Btn.disabled = !canAward;
+
+    // Strike tally
+    const strikeCount = Math.max(0, state.strikes || 0);
+    if (els.strikeTally) {
+      els.strikeTally.textContent = `${Math.min(strikeCount, 3)} / 3`;
+      els.strikeTally.classList.toggle('strike-tally-max', strikeCount >= 3);
+    }
+    if (els.strikeMarks) {
+      els.strikeMarks.querySelectorAll('.strike-mark').forEach((mark, i) => {
+        mark.classList.toggle('filled', i < Math.min(strikeCount, 3));
+      });
     }
 
     // Update status bar
@@ -385,7 +435,7 @@ const Admin = (() => {
     els.statusF1.textContent = `${state.family1.name}: ${state.family1.score}`;
     els.statusF2.textContent = `${state.family2.name}: ${state.family2.score}`;
 
-    // Sync active tab
+    // Sync active tab from live board round
     els.roundTabs.forEach(tab => {
       tab.classList.toggle('active', parseInt(tab.dataset.round) === state.currentRound);
     });

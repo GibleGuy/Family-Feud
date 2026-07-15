@@ -181,17 +181,38 @@ const GameState = (() => {
         break;
 
       case 'REVEAL_ANSWER':
+        if (state.answers[msg.index] && !state.answers[msg.index].revealed) {
+          const ans = state.answers[msg.index];
+          ans.revealed = true;
+          state.revealedIndices.push(msg.index);
+          state.bankScore += ans.points;
+          triggerLocalSound('reveal');
+          notifyListeners();
+        }
+        break;
+
+      case 'HIDE_ANSWER':
+        if (state.answers[msg.index] && state.answers[msg.index].revealed) {
+          const ans = state.answers[msg.index];
+          ans.revealed = false;
+          state.revealedIndices = state.revealedIndices.filter(i => i !== msg.index);
+          state.bankScore = Math.max(0, state.bankScore - ans.points);
+          notifyListeners();
+        }
+        break;
+
       case 'TOGGLE_ANSWER':
         if (state.answers[msg.index]) {
           const ans = state.answers[msg.index];
-          ans.revealed = !ans.revealed;
           if (ans.revealed) {
+            ans.revealed = false;
+            state.revealedIndices = state.revealedIndices.filter(i => i !== msg.index);
+            state.bankScore = Math.max(0, state.bankScore - ans.points);
+          } else {
+            ans.revealed = true;
             state.revealedIndices.push(msg.index);
             state.bankScore += ans.points;
             triggerLocalSound('reveal');
-          } else {
-            state.revealedIndices = state.revealedIndices.filter(i => i !== msg.index);
-            state.bankScore -= ans.points;
           }
           notifyListeners();
         }
@@ -213,15 +234,22 @@ const GameState = (() => {
       case 'AWARD_POINTS': {
         const config = ROUND_CONFIG[state.currentRound] || { multiplier: 1 };
         const awardedPoints = state.bankScore * config.multiplier;
+        if (awardedPoints <= 0) break;
         if (msg.family === 1) {
           state.family1.score += awardedPoints;
         } else {
           state.family2.score += awardedPoints;
         }
+        state.bankScore = 0;
         triggerLocalSound('award');
         notifyListeners();
         break;
       }
+
+      case 'SET_ROUND':
+        state.currentRound = msg.round || state.currentRound;
+        notifyListeners();
+        break;
 
       case 'RESET_ROUND':
         state.question = '';
@@ -486,6 +514,10 @@ const GameState = (() => {
     send({ type: 'REVEAL_ANSWER', index });
   }
 
+  function hideAnswer(index) {
+    send({ type: 'HIDE_ANSWER', index });
+  }
+
   function toggleAnswer(index) {
     send({ type: 'TOGGLE_ANSWER', index });
   }
@@ -496,6 +528,10 @@ const GameState = (() => {
 
   function awardPoints(familyNumber) {
     send({ type: 'AWARD_POINTS', family: familyNumber });
+  }
+
+  function setRound(round) {
+    send({ type: 'SET_ROUND', round });
   }
 
   function resetRound(nextRound) {
@@ -627,9 +663,11 @@ const GameState = (() => {
     loadQuestion,
     showQuestion,
     revealAnswer,
+    hideAnswer,
     toggleAnswer,
     triggerStrike,
     awardPoints,
+    setRound,
     resetRound,
     resetGame,
     updateScores,
