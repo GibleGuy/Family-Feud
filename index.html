@@ -91,6 +91,28 @@
           victory by giving a higher-ranked answer!</div>
       </div>
 
+      <!-- Fast Money Board -->
+      <div class="fast-money-state" id="fast-money-state" style="display: none; flex-direction: column; width: 100%;">
+        <div class="fm-board-header">
+          <div class="fm-board-title">FAST MONEY</div>
+          <div class="fm-board-timer" id="fm-board-timer">20.0</div>
+        </div>
+        <div class="fm-columns">
+          <div class="fm-column" id="fm-col-p1">
+            <div class="fm-column-label">PLAYER 1</div>
+            <div class="fm-slots" id="fm-slots-p1"></div>
+          </div>
+          <div class="fm-column" id="fm-col-p2">
+            <div class="fm-column-label">PLAYER 2</div>
+            <div class="fm-slots" id="fm-slots-p2"></div>
+          </div>
+        </div>
+        <div class="fm-total-pin" id="fm-total-pin">
+          <span class="fm-total-label">TOTAL</span>
+          <span class="fm-total-value" id="fm-total-value">0</span>
+        </div>
+      </div>
+
     </div>
 
     <!-- Team 2 Panel (right flank) -->
@@ -105,7 +127,12 @@
 
   </div>
 
-
+  <!-- ===== Fast Money Win Overlay ===== -->
+  <div class="fm-win-overlay" id="fm-win-overlay">
+    <div class="fm-win-burst"></div>
+    <div class="fm-win-text">FAST MONEY!</div>
+    <div class="fm-win-sub">200 POINTS</div>
+  </div>
 
   <!-- ===== Scripts ===== -->
   <script src="js/sounds.js"></script>

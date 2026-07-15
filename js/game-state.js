@@ -17,6 +17,28 @@ const GameState = (() => {
     5: { answerCount: 3, multiplier: 3 }
   };
 
+  function createEmptyFastMoneySlot() {
+    return {
+      player1: { text: '', points: null, textRevealed: false, pointsRevealed: false },
+      player2: { text: '', points: null, textRevealed: false, pointsRevealed: false }
+    };
+  }
+
+  function createEmptyFastMoneyState() {
+    return {
+      active: false,
+      currentPlayer: 1,
+      player1Hidden: false,
+      timerDuration: 20,
+      timerRemaining: 20,
+      timerRunning: false,
+      timerEndsAt: null,
+      totalScore: 0,
+      won: false,
+      slots: Array.from({ length: 5 }, createEmptyFastMoneySlot)
+    };
+  }
+
   // The central state
   let state = {
     currentRound: 1,
@@ -32,7 +54,8 @@ const GameState = (() => {
     gameStarted: false,
     questionVisible: false, // Hidden until Admin clicks "Show Question"
     showRules: false,       // Display Sudden Death rules screen
-    adminConnected: false
+    adminConnected: false,
+    fastMoney: createEmptyFastMoneyState()
   };
 
   // Listeners for state changes
@@ -96,6 +119,29 @@ const GameState = (() => {
     }
   }
 
+  function stopLocalSound(name) {
+    if (myRole === 'board') {
+      stopSound(name);
+    }
+  }
+
+  function stopLocalSounds(names) {
+    if (myRole === 'board') {
+      stopSounds(names);
+    }
+  }
+
+  const FM_REVEAL_SOUNDS = [
+    'fm-you-said',
+    'fm-survey-correct',
+    'fm-survey-incorrect',
+    'fm-20',
+    'fm-25',
+    'fm-clock-appear',
+    'fm-next-contestant',
+    'fm-duplicate'
+  ];
+
   function handleMessage(msg) {
     switch (msg.type) {
       case 'ADMIN_CONNECTED':
@@ -109,6 +155,7 @@ const GameState = (() => {
         break;
 
       case 'LOAD_QUESTION':
+        state.fastMoney = createEmptyFastMoneyState();
         state.question = msg.question;
         state.answers = msg.answers.map(a => ({ ...a, revealed: false }));
         state.revealedIndices = [];
@@ -188,6 +235,7 @@ const GameState = (() => {
         state.gameStarted = false;
         state.questionVisible = false;
         state.showRules = false;
+        state.fastMoney = createEmptyFastMoneyState();
         if (state.currentRound === 5) {
           triggerLocalSound('sudden-death');
         }
@@ -209,7 +257,8 @@ const GameState = (() => {
           gameStarted: false,
           questionVisible: false,
           showRules: false,
-          adminConnected: state.adminConnected
+          adminConnected: state.adminConnected,
+          fastMoney: createEmptyFastMoneyState()
         };
         notifyListeners();
         break;
@@ -239,6 +288,163 @@ const GameState = (() => {
         if (myRole === 'board') {
           stopSound(msg.soundName);
         }
+        break;
+
+      case 'STOP_ALL_SOUNDS':
+        if (typeof stopAllSounds === 'function') {
+          stopAllSounds();
+        }
+        break;
+
+      // ----- Fast Money -----
+      case 'FM_START':
+        state.fastMoney = createEmptyFastMoneyState();
+        state.fastMoney.active = true;
+        state.gameStarted = true;
+        state.question = '';
+        state.answers = [];
+        state.questionVisible = false;
+        state.showRules = false;
+        state.bankScore = 0;
+        state.showStrike = false;
+        // Clock UI mounts on the public board — play before countdown begins
+        triggerLocalSound('fm-clock-appear');
+        notifyListeners();
+        break;
+
+      case 'FM_EXIT':
+        stopLocalSounds(['fm-20', 'fm-25', 'fm-closing-music', ...FM_REVEAL_SOUNDS, 'fm-win']);
+        state.fastMoney = createEmptyFastMoneyState();
+        state.gameStarted = false;
+        notifyListeners();
+        break;
+
+      case 'FM_RESET_SLOTS':
+        state.fastMoney.slots = Array.from({ length: 5 }, createEmptyFastMoneySlot);
+        state.fastMoney.totalScore = 0;
+        state.fastMoney.won = false;
+        state.fastMoney.player1Hidden = false;
+        notifyListeners();
+        break;
+
+      case 'FM_SET_PLAYER':
+        state.fastMoney.currentPlayer = msg.player;
+        notifyListeners();
+        break;
+
+      case 'FM_UPDATE_SLOT': {
+        const slot = state.fastMoney.slots[msg.index];
+        if (!slot || state.fastMoney.won) break;
+        const side = msg.player === 2 ? slot.player2 : slot.player1;
+        if (typeof msg.text === 'string') side.text = msg.text;
+        if (msg.points !== undefined) side.points = msg.points;
+        notifyListeners();
+        break;
+      }
+
+      case 'FM_REVEAL_TEXT': {
+        const slot = state.fastMoney.slots[msg.index];
+        if (!slot || state.fastMoney.won) break;
+        const side = msg.player === 2 ? slot.player2 : slot.player1;
+        if (!side.textRevealed) {
+          side.textRevealed = true;
+          triggerLocalSound('fm-you-said');
+          notifyListeners();
+        }
+        break;
+      }
+
+      case 'FM_REVEAL_POINTS': {
+        const slot = state.fastMoney.slots[msg.index];
+        if (!slot || state.fastMoney.won) break;
+        const side = msg.player === 2 ? slot.player2 : slot.player1;
+        if (side.pointsRevealed || !side.textRevealed) break;
+        const pts = Number(side.points) || 0;
+        side.points = pts;
+        side.pointsRevealed = true;
+        state.fastMoney.totalScore += pts;
+        if (pts === 0) {
+          state.showStrike = true;
+          state.strikeCount = 1;
+          triggerLocalSound('fm-survey-incorrect');
+          setTimeout(() => {
+            state.showStrike = false;
+            notifyListeners();
+          }, 1500);
+        } else {
+          triggerLocalSound('fm-survey-correct');
+        }
+        if (state.fastMoney.totalScore >= 200) {
+          state.fastMoney.won = true;
+          state.fastMoney.timerRunning = false;
+          state.fastMoney.timerEndsAt = null;
+          // Interrupt / replace other Fast Money SFX with the win sting
+          stopLocalSounds(FM_REVEAL_SOUNDS);
+          triggerLocalSound('fm-win');
+        }
+        notifyListeners();
+        break;
+      }
+
+      case 'FM_TIMER_START': {
+        const duration = msg.duration;
+        const remaining = msg.remaining != null ? msg.remaining : duration;
+        state.fastMoney.timerDuration = duration;
+        state.fastMoney.timerRemaining = remaining;
+        state.fastMoney.timerEndsAt = msg.endsAt;
+        state.fastMoney.timerRunning = true;
+        // Bed music starts with a full countdown (not mid-timer resume)
+        if (msg.playBed) {
+          stopLocalSounds(['fm-20', 'fm-25']);
+          if (duration === 25) {
+            triggerLocalSound('fm-25');
+          } else if (duration === 20) {
+            triggerLocalSound('fm-20');
+          }
+        }
+        notifyListeners();
+        break;
+      }
+
+      case 'FM_TIMER_PAUSE':
+        state.fastMoney.timerRunning = false;
+        state.fastMoney.timerEndsAt = null;
+        state.fastMoney.timerRemaining = msg.remaining;
+        stopLocalSounds(['fm-20', 'fm-25']);
+        notifyListeners();
+        break;
+
+      case 'FM_TIMER_RESET':
+        state.fastMoney.timerRunning = false;
+        state.fastMoney.timerEndsAt = null;
+        state.fastMoney.timerDuration = msg.duration;
+        state.fastMoney.timerRemaining = msg.duration;
+        stopLocalSounds(['fm-20', 'fm-25']);
+        notifyListeners();
+        break;
+
+      case 'FM_TIMER_TICK':
+        // Soft sync of displayed remaining — does not restart the clock
+        if (!state.fastMoney.timerRunning) {
+          state.fastMoney.timerRemaining = msg.remaining;
+          notifyListeners();
+        }
+        break;
+
+      case 'FM_HIDE_P1':
+        state.fastMoney.player1Hidden = true;
+        triggerLocalSound('fm-next-contestant');
+        notifyListeners();
+        break;
+
+      case 'FM_RESTORE_P1':
+        state.fastMoney.player1Hidden = false;
+        notifyListeners();
+        break;
+
+      case 'FM_DUPLICATE':
+        // Intentionally does not touch the timer (wall-clock continues)
+        triggerLocalSound('fm-duplicate');
         break;
     }
   }
@@ -337,6 +543,80 @@ const GameState = (() => {
     send({ type: 'STOP_SOUND', soundName });
   }
 
+  function stopAllTriggerSounds() {
+    send({ type: 'STOP_ALL_SOUNDS' });
+  }
+
+  // --- Fast Money actions ---
+
+  function startFastMoney() {
+    send({ type: 'FM_START' });
+  }
+
+  function exitFastMoney() {
+    send({ type: 'FM_EXIT' });
+  }
+
+  function resetFastMoneySlots() {
+    send({ type: 'FM_RESET_SLOTS' });
+  }
+
+  function setFastMoneyPlayer(player) {
+    send({ type: 'FM_SET_PLAYER', player });
+  }
+
+  function updateFastMoneySlot(player, index, fields) {
+    send({ type: 'FM_UPDATE_SLOT', player, index, ...fields });
+  }
+
+  function revealFastMoneyText(player, index) {
+    send({ type: 'FM_REVEAL_TEXT', player, index });
+  }
+
+  function revealFastMoneyPoints(player, index) {
+    send({ type: 'FM_REVEAL_POINTS', player, index });
+  }
+
+  function startFastMoneyTimer(duration, remaining, options = {}) {
+    const secs = remaining != null ? remaining : duration;
+    const playBed = options.playBed != null
+      ? !!options.playBed
+      : Math.abs(secs - duration) < 0.05;
+    send({
+      type: 'FM_TIMER_START',
+      duration,
+      remaining: secs,
+      endsAt: Date.now() + secs * 1000,
+      playBed
+    });
+  }
+
+  function pauseFastMoneyTimer(remaining) {
+    send({ type: 'FM_TIMER_PAUSE', remaining });
+  }
+
+  function resetFastMoneyTimer(duration) {
+    send({ type: 'FM_TIMER_RESET', duration });
+  }
+
+  function hideFastMoneyPlayer1() {
+    send({ type: 'FM_HIDE_P1' });
+  }
+
+  function restoreFastMoneyPlayer1() {
+    send({ type: 'FM_RESTORE_P1' });
+  }
+
+  function triggerFastMoneyDuplicate() {
+    send({ type: 'FM_DUPLICATE' });
+  }
+
+  function getFastMoneyRemaining() {
+    const fm = state.fastMoney;
+    if (!fm.timerRunning || !fm.timerEndsAt) return fm.timerRemaining;
+    return Math.max(0, (fm.timerEndsAt - Date.now()) / 1000);
+  }
+
   return {
     init,
     getState,
@@ -357,6 +637,22 @@ const GameState = (() => {
     broadcastFullState,
     setRulesVisible,
     triggerSound,
-    stopTriggerSound
+    stopTriggerSound,
+    stopAllTriggerSounds,
+    // Fast Money
+    startFastMoney,
+    exitFastMoney,
+    resetFastMoneySlots,
+    setFastMoneyPlayer,
+    updateFastMoneySlot,
+    revealFastMoneyText,
+    revealFastMoneyPoints,
+    startFastMoneyTimer,
+    pauseFastMoneyTimer,
+    resetFastMoneyTimer,
+    hideFastMoneyPlayer1,
+    restoreFastMoneyPlayer1,
+    triggerFastMoneyDuplicate,
+    getFastMoneyRemaining
   };
 })();

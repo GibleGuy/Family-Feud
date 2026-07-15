@@ -309,9 +309,7 @@ const Admin = (() => {
     });
 
     els.stopAllSoundsBtn.addEventListener('click', () => {
-      ['intro', 'new-round', 'game-win', 'commercial-back'].forEach(s => {
-        GameState.stopTriggerSound(s);
-      });
+      GameState.stopAllTriggerSounds();
     });
   }
 

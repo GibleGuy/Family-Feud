@@ -6,6 +6,11 @@
 const Board = (() => {
   // DOM element references (populated on init)
   let els = {};
+  let lastQuestionStr = null;
+  let displayedTotal = 0;
+  let totalAnimId = null;
+  let timerRafId = null;
+  let slotsBuilt = false;
 
   function init() {
     els = {
@@ -24,6 +29,14 @@ const Board = (() => {
       welcomeState: document.getElementById('welcome-state'),
       gameBoard: document.getElementById('game-board'),
       rulesState: document.getElementById('rules-state'),
+      fastMoneyState: document.getElementById('fast-money-state'),
+      fmSlotsP1: document.getElementById('fm-slots-p1'),
+      fmSlotsP2: document.getElementById('fm-slots-p2'),
+      fmColP1: document.getElementById('fm-col-p1'),
+      fmBoardTimer: document.getElementById('fm-board-timer'),
+      fmTotalValue: document.getElementById('fm-total-value'),
+      fmWinOverlay: document.getElementById('fm-win-overlay'),
+      topBar: document.querySelector('.top-bar'),
       openAdminBtn: document.getElementById('open-admin-btn')
     };
 
@@ -37,10 +50,14 @@ const Board = (() => {
 
     // Show welcome state
     showWelcome();
+    ensureFastMoneySlots();
+    startBoardTimerLoop();
 
-    // Admin button binding
+    // Admin button binding — always open from the board's HTTP origin
+    // (avoids reusing a stale file:// AdminPanel window)
     els.openAdminBtn.addEventListener('click', () => {
-      window.open('admin.html', 'AdminPanel', 'width=800,height=900,menubar=no,toolbar=no,location=no,status=no');
+      const adminUrl = new URL('admin.html', window.location.href).href;
+      window.open(adminUrl, 'FamilyFeudAdmin', 'width=900,height=960,menubar=no,toolbar=no,location=yes,status=no');
     });
   }
 
@@ -54,37 +71,84 @@ const Board = (() => {
     channel.close();
   }
 
-  function showWelcome() {
-    els.welcomeState.style.display = 'flex';
+  function hideAllBoardViews() {
+    els.welcomeState.style.display = 'none';
     els.gameBoard.style.display = 'none';
+    if (els.rulesState) els.rulesState.style.display = 'none';
+    if (els.fastMoneyState) els.fastMoneyState.style.display = 'none';
+  }
+
+  function showWelcome() {
+    hideAllBoardViews();
+    els.welcomeState.style.display = 'flex';
   }
 
   function showGameBoard() {
-    els.welcomeState.style.display = 'none';
+    hideAllBoardViews();
     els.gameBoard.style.display = 'flex';
   }
 
-  let lastQuestionStr = null;
+  function showFastMoneyBoard() {
+    hideAllBoardViews();
+    els.fastMoneyState.style.display = 'flex';
+  }
+
+  function ensureFastMoneySlots() {
+    if (slotsBuilt || !els.fmSlotsP1 || !els.fmSlotsP2) return;
+    for (let i = 0; i < 5; i++) {
+      els.fmSlotsP1.appendChild(createFmSlot(1, i));
+      els.fmSlotsP2.appendChild(createFmSlot(2, i));
+    }
+    slotsBuilt = true;
+  }
+
+  function createFmSlot(player, index) {
+    const slot = document.createElement('div');
+    slot.className = 'fm-slot';
+    slot.dataset.player = player;
+    slot.dataset.index = index;
+    slot.innerHTML = `
+      <div class="fm-slot-num">${index + 1}</div>
+      <div class="fm-slot-answer"></div>
+      <div class="fm-slot-points"></div>
+    `;
+    return slot;
+  }
 
   /**
    * Main render function — called on every state change.
    */
   function render(state) {
+    const fm = state.fastMoney || {};
     let justLoaded = false;
     if (state.question !== lastQuestionStr) {
       justLoaded = true;
       lastQuestionStr = state.question;
     }
 
-    // Toggle views: rules, game board, or welcome screen
-    if (state.showRules) {
-      els.welcomeState.style.display = 'none';
-      els.gameBoard.style.display = 'none';
+    // Toggle views: Fast Money, rules, game board, or welcome
+    if (fm.active) {
+      if (els.questionDisplay.parentElement) {
+        els.questionDisplay.parentElement.style.setProperty('display', 'none', 'important');
+      }
+      if (els.topBar) {
+        // Keep top bar for admin button, but bank is survey-only noise — dim via class
+        document.body.classList.add('fast-money-active');
+      }
+      showFastMoneyBoard();
+      document.body.classList.add('game-active');
+      renderFastMoney(fm);
+    } else if (state.showRules) {
+      document.body.classList.remove('fast-money-active');
+      hideAllBoardViews();
       els.rulesState.style.display = 'flex';
       if (els.questionDisplay.parentElement) {
         els.questionDisplay.parentElement.style.setProperty('display', 'none', 'important');
       }
     } else {
+      document.body.classList.remove('fast-money-active');
+      displayedTotal = 0;
+      if (els.fmWinOverlay) els.fmWinOverlay.classList.remove('active');
       if (els.rulesState) {
         els.rulesState.style.display = 'none';
       }
@@ -103,48 +167,45 @@ const Board = (() => {
     // Toggle admin button visibility
     els.openAdminBtn.style.display = state.adminConnected ? 'none' : 'block';
 
-    // Question: Hide true text until shown by admin
-    if (state.questionVisible) {
-      if (!els.questionDisplay.classList.contains('revealed')) {
-        els.questionDisplay.classList.add('flip-active');
-        // Swap text at midpoint (300ms) when card is rotated 90 degrees
-        setTimeout(() => {
+    // Survey question: never show Fast Money host questions on the board
+    if (!fm.active) {
+      if (state.questionVisible) {
+        if (!els.questionDisplay.classList.contains('revealed')) {
+          els.questionDisplay.classList.add('flip-active');
+          setTimeout(() => {
+            els.questionDisplay.textContent = state.question;
+            els.questionDisplay.classList.add('revealed');
+          }, 300);
+          setTimeout(() => {
+            els.questionDisplay.classList.remove('flip-active');
+          }, 600);
+        } else {
           els.questionDisplay.textContent = state.question;
-          els.questionDisplay.classList.add('revealed');
-        }, 300);
-        // Remove animation class after completion (600ms)
-        setTimeout(() => {
-          els.questionDisplay.classList.remove('flip-active');
-        }, 600);
+        }
       } else {
-        els.questionDisplay.textContent = state.question;
+        els.questionDisplay.textContent = 'The question is...';
+        els.questionDisplay.classList.remove('revealed');
       }
-    } else {
-      els.questionDisplay.textContent = 'The question is...';
-      els.questionDisplay.classList.remove('revealed');
+
+      const config = GameState.getRoundConfig(state.currentRound);
+      els.bankScore.textContent = state.bankScore * config.multiplier;
+      pulseElement(els.bankScore);
+
+      if (config.multiplier > 1) {
+        els.multiplierBadge.textContent = `${config.multiplier}× POINTS`;
+        els.multiplierBadge.classList.add('visible');
+      } else {
+        els.multiplierBadge.classList.remove('visible');
+      }
+
+      els.roundIndicator.textContent = `ROUND ${state.currentRound}`;
+      renderAnswers(state, justLoaded);
     }
-
-    // Bank score
-    const config = GameState.getRoundConfig(state.currentRound);
-    els.bankScore.textContent = state.bankScore * config.multiplier;
-    pulseElement(els.bankScore);
-
-    // Multiplier badge
-    if (config.multiplier > 1) {
-      els.multiplierBadge.textContent = `${config.multiplier}× POINTS`;
-      els.multiplierBadge.classList.add('visible');
-    } else {
-      els.multiplierBadge.classList.remove('visible');
-    }
-
-    // Round indicator
-    els.roundIndicator.textContent = `ROUND ${state.currentRound}`;
 
     // Family scores
     els.family1Score.textContent = state.family1.score;
     els.family2Score.textContent = state.family2.score;
 
-    // Update family names only if different (avoid cursor jump)
     if (document.activeElement !== els.family1Name) {
       els.family1Name.value = state.family1.name;
     }
@@ -152,13 +213,106 @@ const Board = (() => {
       els.family2Name.value = state.family2.name;
     }
 
-    // Render answer cards
-    renderAnswers(state, justLoaded);
-
     // Strikes
     if (state.showStrike) {
       showStrikes(state.strikeCount);
     }
+  }
+
+  function renderFastMoney(fm) {
+    ensureFastMoneySlots();
+
+    els.fmColP1.classList.toggle('fm-hidden', !!fm.player1Hidden);
+
+    updateFmColumn(els.fmSlotsP1, fm.slots, 1, fm.player1Hidden);
+    updateFmColumn(els.fmSlotsP2, fm.slots, 2, false);
+
+    animateTotal(fm.totalScore);
+
+    if (fm.won) {
+      els.fmWinOverlay.classList.add('active');
+    } else {
+      els.fmWinOverlay.classList.remove('active');
+    }
+
+    if (!fm.timerRunning) {
+      els.fmBoardTimer.textContent = formatTime(fm.timerRemaining);
+      els.fmBoardTimer.classList.toggle('fm-timer-low', fm.timerRemaining <= 5 && fm.timerRemaining > 0);
+    }
+  }
+
+  function updateFmColumn(container, slots, player, forceHidden) {
+    const children = container.children;
+    for (let i = 0; i < 5; i++) {
+      const el = children[i];
+      const side = player === 2 ? slots[i].player2 : slots[i].player1;
+      const answerEl = el.querySelector('.fm-slot-answer');
+      const pointsEl = el.querySelector('.fm-slot-points');
+
+      el.classList.toggle('text-revealed', side.textRevealed && !forceHidden);
+      el.classList.toggle('points-revealed', side.pointsRevealed && !forceHidden);
+      el.classList.toggle('zero-points', side.pointsRevealed && side.points === 0 && !forceHidden);
+
+      if (forceHidden) {
+        answerEl.textContent = '';
+        pointsEl.textContent = '';
+      } else {
+        answerEl.textContent = side.textRevealed ? (side.text || '') : '';
+        if (side.pointsRevealed) {
+          pointsEl.textContent = String(side.points ?? 0);
+        } else {
+          pointsEl.textContent = '';
+        }
+      }
+    }
+  }
+
+  function animateTotal(target) {
+    if (target === displayedTotal) {
+      els.fmTotalValue.textContent = String(target);
+      return;
+    }
+
+    if (totalAnimId) cancelAnimationFrame(totalAnimId);
+    const start = displayedTotal;
+    const diff = target - start;
+    const startTime = performance.now();
+    const duration = 450;
+
+    const step = (now) => {
+      const t = Math.min(1, (now - startTime) / duration);
+      const eased = 1 - Math.pow(1 - t, 3);
+      displayedTotal = Math.round(start + diff * eased);
+      els.fmTotalValue.textContent = String(displayedTotal);
+      els.fmTotalValue.classList.add('fm-total-pulse');
+      if (t < 1) {
+        totalAnimId = requestAnimationFrame(step);
+      } else {
+        displayedTotal = target;
+        els.fmTotalValue.textContent = String(target);
+        setTimeout(() => els.fmTotalValue.classList.remove('fm-total-pulse'), 200);
+      }
+    };
+    totalAnimId = requestAnimationFrame(step);
+  }
+
+  function formatTime(seconds) {
+    return Math.max(0, seconds).toFixed(1);
+  }
+
+  function startBoardTimerLoop() {
+    const tick = () => {
+      const state = GameState.getState();
+      const fm = state.fastMoney;
+      if (fm && fm.active && fm.timerRunning && els.fmBoardTimer) {
+        const remaining = GameState.getFastMoneyRemaining();
+        els.fmBoardTimer.textContent = formatTime(remaining);
+        els.fmBoardTimer.classList.toggle('fm-timer-low', remaining <= 5 && remaining > 0);
+        els.fmBoardTimer.classList.toggle('fm-timer-done', remaining <= 0);
+      }
+      timerRafId = requestAnimationFrame(tick);
+    };
+    timerRafId = requestAnimationFrame(tick);
   }
 
   function renderAnswers(state, justLoaded) {

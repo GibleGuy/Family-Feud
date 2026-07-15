@@ -43,7 +43,7 @@
   </div>
 
   <!-- ===== Round Selector ===== -->
-  <div class="section">
+  <div class="section" id="survey-round-section">
     <div class="section-title">
       <span class="icon">🔄</span> Select Round
     </div>
@@ -69,6 +69,58 @@
         <span class="round-info">Sudden Death · 3×</span>
       </div>
     </div>
+    <div class="controls-row mt-12">
+      <button class="btn btn-orange" id="start-fast-money-btn" style="flex: 1;">⚡ Start Fast Money</button>
+    </div>
+  </div>
+
+  <!-- ===== Fast Money Controls ===== -->
+  <div id="fast-money-controls" class="hidden">
+
+    <div class="section" style="border-color: var(--orange);">
+      <div class="section-title">
+        <span class="icon">⚡</span> Fast Money
+      </div>
+      <div class="controls-row">
+        <button class="btn btn-red" id="fm-exit-btn" style="flex: 1;">← Back to Main Game</button>
+        <button class="btn btn-orange btn-sm" id="fm-rerandomize-btn">🎲 Re-randomize</button>
+      </div>
+      <div class="controls-row mt-12">
+        <button class="btn btn-blue btn-sm" id="fm-player1-btn">Player 1 (20s)</button>
+        <button class="btn btn-sm" id="fm-player2-btn">Player 2 (25s)</button>
+      </div>
+      <div class="fm-timer-panel mt-12">
+        <div class="fm-timer-display" id="fm-timer-display">20.0</div>
+        <div class="fm-timer-controls">
+          <button class="btn btn-sm" id="fm-timer-20-btn">20s</button>
+          <button class="btn btn-sm" id="fm-timer-25-btn">25s</button>
+          <button class="btn btn-green btn-sm" id="fm-timer-play-btn">▶ Play</button>
+          <button class="btn btn-orange btn-sm" id="fm-timer-pause-btn">⏸ Pause</button>
+          <button class="btn btn-red btn-sm" id="fm-timer-reset-btn">↺ Reset</button>
+        </div>
+      </div>
+      <div class="controls-row mt-12">
+        <button class="btn btn-purple btn-sm" id="fm-hide-p1-btn">🙈 Hide Player 1 Board</button>
+        <button class="btn btn-purple btn-sm" id="fm-restore-p1-btn">👁 Restore Player 1 Board</button>
+        <button class="btn btn-red" id="fm-duplicate-btn" title="Keyboard: D">🔔 Duplicate Answer (D)</button>
+      </div>
+      <div class="fm-total-admin mt-12">
+        Running Total: <strong id="fm-admin-total">0</strong> / 200
+        <span id="fm-win-badge" class="hidden"> — WIN!</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">📋</span> Questions &amp; Live Answers
+        <span style="font-weight: 500; text-transform: none; letter-spacing: 0; color: var(--text-muted); margin-left: 8px;">(never shown on public board)</span>
+      </div>
+      <div id="fm-question-rows"></div>
+      <div class="controls-row mt-12">
+        <button class="btn btn-red" id="fm-exit-btn-bottom" style="flex: 1;">← Back to Main Game</button>
+      </div>
+    </div>
+
   </div>
 
   <!-- ===== Sudden Death Rules Display ===== -->
@@ -196,6 +248,7 @@
       <button class="btn sound-btn" data-sound="new-round" style="padding: 10px; font-weight: bold; background: #333; color: white; border: 1px solid #555; border-radius: 4px; cursor: pointer;">🔔 New Round</button>
       <button class="btn sound-btn" data-sound="game-win" style="padding: 10px; font-weight: bold; background: #333; color: white; border: 1px solid #555; border-radius: 4px; cursor: pointer;">🏆 Win Game</button>
       <button class="btn sound-btn" data-sound="commercial-back" style="padding: 10px; font-weight: bold; background: #333; color: white; border: 1px solid #555; border-radius: 4px; cursor: pointer;">📺 Commercial Back</button>
+      <button class="btn sound-btn" data-sound="fm-closing-music" style="padding: 10px; font-weight: bold; background: #333; color: white; border: 1px solid #555; border-radius: 4px; cursor: pointer;">🎹 Fast Money Closing Music</button>
     </div>
     <div class="controls-row mt-12" style="justify-content: flex-end;">
       <button class="btn btn-red btn-sm" id="stop-all-sounds-btn" style="padding: 8px 12px; font-weight: bold; border-radius: 4px; cursor: pointer;">🛑 Stop Playback</button>
@@ -207,6 +260,7 @@
   <script src="js/sounds.js"></script>
   <script src="js/game-state.js"></script>
   <script src="js/admin.js"></script>
+  <script src="js/fast-money-admin.js"></script>
 
 </body>
 </html>
