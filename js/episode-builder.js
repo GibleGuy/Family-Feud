@@ -49,16 +49,16 @@ const EpisodeBuilder = (() => {
   async function autoLoadSampleEpisodes() {
     if (EpisodeLibrary.listNames().length > 0) return;
     const samples = [
-      'Answers/Episodes/01-Neighborhood-BBQ.csv',
-      'Answers/Episodes/02-Office-Life.csv',
-      'Answers/Episodes/03-Holiday-Hustle.csv',
-      'Answers/Episodes/04-School-Days.csv',
-      'Answers/Episodes/05-Road-Trip.csv',
-      'Answers/Episodes/06-Dating-Game.csv',
-      'Answers/Episodes/07-Kitchen-Chaos.csv',
-      'Answers/Episodes/08-Sports-Night.csv',
-      'Answers/Episodes/09-Movie-Night.csv',
-      'Answers/Episodes/10-Weekend-Warriors.csv'
+      'Answers/Episodes/01-Family-Life.csv',
+      'Answers/Episodes/02-At-The-Office.csv',
+      'Answers/Episodes/03-Food-And-Kitchen.csv',
+      'Answers/Episodes/04-Holidays.csv',
+      'Answers/Episodes/05-On-The-Road.csv',
+      'Answers/Episodes/06-School-Days.csv',
+      'Answers/Episodes/07-Love-And-Dating.csv',
+      'Answers/Episodes/08-Sports-And-Games.csv',
+      'Answers/Episodes/09-Movies-And-TV.csv',
+      'Answers/Episodes/10-Around-The-House.csv'
     ];
     for (const path of samples) {
       try {
