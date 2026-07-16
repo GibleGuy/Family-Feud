@@ -11,132 +11,136 @@
 
 <body>
 
-  <!-- ===== Background Spotlight overlay ===== -->
+  <!-- ===== Background Spotlight overlay (full viewport; not scaled) ===== -->
   <div class="backdrop"></div>
-  <div class="light-board-backdrop"></div>
 
-  <!-- ===== Strike Overlay ===== -->
-  <div class="strike-overlay" id="strike-overlay"></div>
+  <!-- ===== Scaled stage: renders at 175% so 100% browser zoom matches prior 175% zoom ===== -->
+  <div class="game-stage">
+    <div class="light-board-backdrop"></div>
 
-  <!-- ===== Top Bar: Bank & Admin Button ===== -->
-  <div class="top-bar">
-    <div></div> <!-- left empty spacer for grid alignment symmetry -->
+    <!-- ===== Strike Overlay ===== -->
+    <div class="strike-overlay" id="strike-overlay"></div>
 
-    <div class="bank-display">
-      <div class="bank-score" id="bank-score">0</div>
-      <div class="multiplier-badge" id="multiplier-badge">2× POINTS</div>
-      <div class="board-strike-tally" id="board-strike-tally" aria-label="Strikes this round">
-        <span class="board-strike-mark" data-strike="1"></span>
-        <span class="board-strike-mark" data-strike="2"></span>
-        <span class="board-strike-mark" data-strike="3"></span>
-      </div>
-    </div>
+    <!-- ===== Top Bar: Bank & Admin Button ===== -->
+    <div class="top-bar">
+      <div></div> <!-- left empty spacer for grid alignment symmetry -->
 
-    <div class="admin-btn-wrapper">
-      <button id="open-admin-btn" class="open-admin-btn">⚙️ Open Admin Panel</button>
-    </div>
-  </div>
-
-  <!-- ===== Question Display Area ===== -->
-  <div class="question-wrapper">
-    <div class="question-display" id="question-display">The question is...</div>
-  </div>
-
-  <!-- ===== Main Content ===== -->
-  <div class="main-content">
-
-    <!-- Team 1 Panel (left flank) -->
-    <div class="team-panel left-flank">
-      <div class="team-name-box">
-        <input type="text" class="family-name-input" id="family1-name" value="TEAM 1" maxlength="16">
-      </div>
-      <div class="team-score-box">
-        <div class="team-score-value" id="family1-score">0</div>
-      </div>
-    </div>
-
-    <!-- Answer Board -->
-    <div class="board-container">
-
-      <!-- Welcome / Idle State -->
-      <div class="welcome-state" id="welcome-state">
-        <div class="logo-text">FAMILY FEUD</div>
-        <div class="welcome-divider">
-          <span class="dot"></span>
-          <span class="line"></span>
-          <span class="diamond">♦</span>
-          <span class="line"></span>
-          <span class="dot"></span>
+      <div class="bank-display">
+        <div class="bank-score" id="bank-score">0</div>
+        <div class="multiplier-badge" id="multiplier-badge">2× POINTS</div>
+        <div class="board-strike-tally" id="board-strike-tally" aria-label="Strikes this round">
+          <span class="board-strike-mark" data-strike="1"></span>
+          <span class="board-strike-mark" data-strike="2"></span>
+          <span class="board-strike-mark" data-strike="3"></span>
         </div>
-        <div class="subtitle">Waiting for host to start a round…</div>
       </div>
 
-      <!-- Active Game Board -->
-      <div id="game-board" style="display: none; flex-direction: column; width: 100%;">
-        <div class="board-frame" id="board-frame">
-          <div class="answer-grid" id="answer-grid">
-            <!-- Answer cards injected by JS -->
+      <div class="admin-btn-wrapper">
+        <button id="open-admin-btn" class="open-admin-btn">⚙️ Open Admin Panel</button>
+      </div>
+    </div>
+
+    <!-- ===== Question Display Area ===== -->
+    <div class="question-wrapper">
+      <div class="question-display" id="question-display">The question is...</div>
+    </div>
+
+    <!-- ===== Main Content ===== -->
+    <div class="main-content">
+
+      <!-- Team 1 Panel (left flank) -->
+      <div class="team-panel left-flank">
+        <div class="team-name-box">
+          <input type="text" class="family-name-input" id="family1-name" value="TEAM 1" maxlength="16">
+        </div>
+        <div class="team-score-box">
+          <div class="team-score-value" id="family1-score">0</div>
+        </div>
+      </div>
+
+      <!-- Answer Board -->
+      <div class="board-container">
+
+        <!-- Welcome / Idle State -->
+        <div class="welcome-state" id="welcome-state">
+          <div class="logo-text">FAMILY FEUD</div>
+          <div class="welcome-divider">
+            <span class="dot"></span>
+            <span class="line"></span>
+            <span class="diamond">♦</span>
+            <span class="line"></span>
+            <span class="dot"></span>
           </div>
-          <div class="round-indicator" id="round-indicator">ROUND 1</div>
+          <div class="subtitle">Waiting for host to start a round…</div>
         </div>
-      </div>
 
-      <!-- Sudden Death Rules State -->
-      <div class="rules-state" id="rules-state" style="display: none; flex-direction: column; width: 100%;">
-        <div class="rules-title">SUDDEN DEATH RULES</div>
-        <div class="rules-divider">
-          <span class="dot"></span>
-          <span class="line"></span>
-          <span class="diamond">♦</span>
-          <span class="line"></span>
-          <span class="dot"></span>
-        </div>
-        <div class="rules-body">In Sudden Death, the first player to buzz in must guess the Number One answer to
-          instantly win the game. If they guess a lower-ranked answer, their opponent gets one chance to steal the
-          victory by giving a higher-ranked answer!</div>
-      </div>
-
-      <!-- Fast Money Board -->
-      <div class="fast-money-state" id="fast-money-state" style="display: none; flex-direction: column; width: 100%;">
-        <div class="fm-board-header">
-          <div class="fm-board-title">FAST MONEY</div>
-          <div class="fm-board-timer" id="fm-board-timer">20.0</div>
-        </div>
-        <div class="fm-columns">
-          <div class="fm-column" id="fm-col-p1">
-            <div class="fm-column-label">PLAYER 1</div>
-            <div class="fm-slots" id="fm-slots-p1"></div>
-          </div>
-          <div class="fm-column" id="fm-col-p2">
-            <div class="fm-column-label">PLAYER 2</div>
-            <div class="fm-slots" id="fm-slots-p2"></div>
+        <!-- Active Game Board -->
+        <div id="game-board" style="display: none; flex-direction: column; width: 100%;">
+          <div class="board-frame" id="board-frame">
+            <div class="answer-grid" id="answer-grid">
+              <!-- Answer cards injected by JS -->
+            </div>
+            <div class="round-indicator" id="round-indicator">ROUND 1</div>
           </div>
         </div>
-        <div class="fm-total-pin" id="fm-total-pin">
-          <span class="fm-total-label">TOTAL</span>
-          <span class="fm-total-value" id="fm-total-value">0</span>
+
+        <!-- Sudden Death Rules State -->
+        <div class="rules-state" id="rules-state" style="display: none; flex-direction: column; width: 100%;">
+          <div class="rules-title">SUDDEN DEATH RULES</div>
+          <div class="rules-divider">
+            <span class="dot"></span>
+            <span class="line"></span>
+            <span class="diamond">♦</span>
+            <span class="line"></span>
+            <span class="dot"></span>
+          </div>
+          <div class="rules-body">In Sudden Death, the first player to buzz in must guess the Number One answer to
+            instantly win the game. If they guess a lower-ranked answer, their opponent gets one chance to steal the
+            victory by giving a higher-ranked answer!</div>
+        </div>
+
+        <!-- Fast Money Board -->
+        <div class="fast-money-state" id="fast-money-state" style="display: none; flex-direction: column; width: 100%;">
+          <div class="fm-board-header">
+            <div class="fm-board-title">FAST MONEY</div>
+            <div class="fm-board-timer" id="fm-board-timer">20.0</div>
+          </div>
+          <div class="fm-columns">
+            <div class="fm-column" id="fm-col-p1">
+              <div class="fm-column-label">PLAYER 1</div>
+              <div class="fm-slots" id="fm-slots-p1"></div>
+            </div>
+            <div class="fm-column" id="fm-col-p2">
+              <div class="fm-column-label">PLAYER 2</div>
+              <div class="fm-slots" id="fm-slots-p2"></div>
+            </div>
+          </div>
+          <div class="fm-total-pin" id="fm-total-pin">
+            <span class="fm-total-label">TOTAL</span>
+            <span class="fm-total-value" id="fm-total-value">0</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Team 2 Panel (right flank) -->
+      <div class="team-panel right-flank">
+        <div class="team-name-box">
+          <input type="text" class="family-name-input" id="family2-name" value="TEAM 2" maxlength="16">
+        </div>
+        <div class="team-score-box">
+          <div class="team-score-value" id="family2-score">0</div>
         </div>
       </div>
 
     </div>
 
-    <!-- Team 2 Panel (right flank) -->
-    <div class="team-panel right-flank">
-      <div class="team-name-box">
-        <input type="text" class="family-name-input" id="family2-name" value="TEAM 2" maxlength="16">
-      </div>
-      <div class="team-score-box">
-        <div class="team-score-value" id="family2-score">0</div>
-      </div>
+    <!-- ===== Fast Money Win Overlay ===== -->
+    <div class="fm-win-overlay" id="fm-win-overlay">
+      <div class="fm-win-burst"></div>
+      <div class="fm-win-text">FAST MONEY!</div>
+      <div class="fm-win-sub">200 POINTS</div>
     </div>
-
-  </div>
-
-  <!-- ===== Fast Money Win Overlay ===== -->
-  <div class="fm-win-overlay" id="fm-win-overlay">
-    <div class="fm-win-burst"></div>
-    <div class="fm-win-text">FAST MONEY!</div>
-    <div class="fm-win-sub">200 POINTS</div>
   </div>
 
   <!-- ===== Scripts ===== -->
