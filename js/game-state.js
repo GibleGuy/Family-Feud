@@ -276,8 +276,12 @@ const GameState = (() => {
         if (state.answers[msg.index] && !state.answers[msg.index].revealed) {
           const ans = state.answers[msg.index];
           ans.revealed = true;
+          ans.countedInBank = !msg.skipBank;
           state.revealedIndices.push(msg.index);
-          state.bankScore += ans.points;
+          // Post-game "reveal all" passes skipBank so the board total stays put
+          if (ans.countedInBank) {
+            state.bankScore += ans.points;
+          }
           triggerLocalSound('reveal');
           notifyListeners();
         }
@@ -288,7 +292,10 @@ const GameState = (() => {
           const ans = state.answers[msg.index];
           ans.revealed = false;
           state.revealedIndices = state.revealedIndices.filter(i => i !== msg.index);
-          state.bankScore = Math.max(0, state.bankScore - ans.points);
+          if (ans.countedInBank) {
+            state.bankScore = Math.max(0, state.bankScore - ans.points);
+          }
+          ans.countedInBank = false;
           notifyListeners();
         }
         break;
@@ -299,9 +306,13 @@ const GameState = (() => {
           if (ans.revealed) {
             ans.revealed = false;
             state.revealedIndices = state.revealedIndices.filter(i => i !== msg.index);
-            state.bankScore = Math.max(0, state.bankScore - ans.points);
+            if (ans.countedInBank) {
+              state.bankScore = Math.max(0, state.bankScore - ans.points);
+            }
+            ans.countedInBank = false;
           } else {
             ans.revealed = true;
+            ans.countedInBank = true;
             state.revealedIndices.push(msg.index);
             state.bankScore += ans.points;
             triggerLocalSound('reveal');
@@ -723,8 +734,8 @@ const GameState = (() => {
     send({ type: 'SHOW_QUESTION' });
   }
 
-  function revealAnswer(index) {
-    send({ type: 'REVEAL_ANSWER', index });
+  function revealAnswer(index, options = {}) {
+    send({ type: 'REVEAL_ANSWER', index, skipBank: !!options.skipBank });
   }
 
   function hideAnswer(index) {

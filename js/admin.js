@@ -591,7 +591,7 @@ const Admin = (() => {
         await wait(1600); // zoom in / hold
         GameState.hideRevealRank();
         await wait(200);
-        GameState.revealAnswer(item.idx);
+        GameState.revealAnswer(item.idx, { skipBank: true });
         await wait(4000); // let host & audience read it
       }
     } finally {
