@@ -39,6 +39,58 @@ const GameState = (() => {
     };
   }
 
+  const STORAGE_CF = 'ff-copyright-free';
+  const STORAGE_BRAND = 'ff-brand-logo';
+  const STORAGE_VOLUME = 'ff-volume';
+
+  function readStoredCopyrightFree() {
+    try {
+      return localStorage.getItem(STORAGE_CF) === '1';
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function writeStoredCopyrightFree(enabled) {
+    try {
+      localStorage.setItem(STORAGE_CF, enabled ? '1' : '0');
+    } catch (_) { /* ignore */ }
+  }
+
+  function readStoredBrandLogo() {
+    try {
+      return localStorage.getItem(STORAGE_BRAND) || '';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  function writeStoredBrandLogo(dataUrl) {
+    try {
+      if (dataUrl) localStorage.setItem(STORAGE_BRAND, dataUrl);
+      else localStorage.removeItem(STORAGE_BRAND);
+      return true;
+    } catch (err) {
+      console.warn('[Brand] Could not save logo to localStorage:', err);
+      return false;
+    }
+  }
+
+  function readStoredVolume() {
+    if (typeof SoundEffects !== 'undefined') {
+      return SoundEffects.getVolume();
+    }
+    try {
+      const raw = localStorage.getItem(STORAGE_VOLUME);
+      if (raw == null || raw === '') return 0.7;
+      const n = Number(raw);
+      if (!Number.isFinite(n)) return 0.7;
+      return Math.max(0, Math.min(1, n));
+    } catch (_) {
+      return 0.7;
+    }
+  }
+
   // The central state
   let state = {
     currentRound: 1,
@@ -56,8 +108,20 @@ const GameState = (() => {
     questionVisible: false, // Hidden until Admin clicks "Show Question"
     showRules: false,       // Display Sudden Death rules screen
     adminConnected: false,
+    copyrightFree: readStoredCopyrightFree(),
+    brandLogo: readStoredBrandLogo(),
+    volume: readStoredVolume(),
+    buzzedFamily: 0,        // 0 = none, 1 = left, 2 = right (face-off lock)
+    revealRank: 0,          // 0 = hidden; else answer number for zoom overlay (#N!)
+    revealRankNonce: 0,
     fastMoney: createEmptyFastMoneyState()
   };
+
+  // Apply sound pack + volume as soon as state is known
+  if (typeof SoundEffects !== 'undefined') {
+    SoundEffects.setCopyrightFreeMode(state.copyrightFree);
+    SoundEffects.setVolume(state.volume);
+  }
 
   // Listeners for state changes
   const listeners = [];
@@ -112,6 +176,15 @@ const GameState = (() => {
       state.family2.name = msg.family2Name;
       notifyListeners();
     }
+    // Board-focused buzzers — apply without rebroadcasting
+    if (msg.type === 'BUZZ_IN' && !state.buzzedFamily) {
+      state.buzzedFamily = msg.family === 2 ? 2 : 1;
+      notifyListeners();
+    }
+    if (msg.type === 'BUZZ_RESET') {
+      state.buzzedFamily = 0;
+      notifyListeners();
+    }
       };
     }
   }
@@ -131,6 +204,12 @@ const GameState = (() => {
   function stopLocalSounds(names) {
     if (myRole === 'board') {
       stopSounds(names);
+    }
+  }
+
+  function fadeLocalSounds(names, durationMs) {
+    if (myRole === 'board' && typeof SoundEffects !== 'undefined') {
+      SoundEffects.fadeOutSounds(names, durationMs);
     }
   }
 
@@ -154,6 +233,13 @@ const GameState = (() => {
 
       case 'FULL_STATE':
         state = { ...msg.state, adminConnected: true };
+        // Brand logos can be large — prefer shared localStorage over the channel payload
+        if (!state.brandLogo) state.brandLogo = readStoredBrandLogo();
+        if (typeof state.volume !== 'number') state.volume = readStoredVolume();
+        if (typeof SoundEffects !== 'undefined') {
+          SoundEffects.setCopyrightFreeMode(!!state.copyrightFree);
+          SoundEffects.setVolume(state.volume);
+        }
         notifyListeners();
         break;
 
@@ -171,6 +257,8 @@ const GameState = (() => {
         state.gameStarted = true;
         state.questionVisible = false;
         state.showRules = false;
+        state.buzzedFamily = 0;
+        state.revealRank = 0;
         if (msg.round === 5) {
           triggerLocalSound('sudden-death');
         } else {
@@ -287,6 +375,8 @@ const GameState = (() => {
         state.gameStarted = false;
         state.questionVisible = false;
         state.showRules = false;
+        state.buzzedFamily = 0;
+        state.revealRank = 0;
         state.fastMoney = createEmptyFastMoneyState();
         if (state.currentRound === 5) {
           triggerLocalSound('sudden-death');
@@ -311,6 +401,12 @@ const GameState = (() => {
           questionVisible: false,
           showRules: false,
           adminConnected: state.adminConnected,
+          copyrightFree: state.copyrightFree,
+          brandLogo: state.brandLogo,
+          volume: state.volume,
+          buzzedFamily: 0,
+          revealRank: 0,
+          revealRankNonce: state.revealRankNonce || 0,
           fastMoney: createEmptyFastMoneyState()
         };
         notifyListeners();
@@ -330,6 +426,82 @@ const GameState = (() => {
 
       case 'SET_RULES_VISIBLE':
         state.showRules = msg.visible;
+        notifyListeners();
+        break;
+
+      case 'SET_COPYRIGHT_FREE':
+        state.copyrightFree = !!msg.enabled;
+        writeStoredCopyrightFree(state.copyrightFree);
+        if (typeof SoundEffects !== 'undefined') {
+          SoundEffects.setCopyrightFreeMode(state.copyrightFree);
+        }
+        notifyListeners();
+        break;
+
+      case 'SET_VOLUME': {
+        const level = Math.max(0, Math.min(1, Number(msg.volume)));
+        if (!Number.isFinite(level)) break;
+        state.volume = level;
+        if (typeof SoundEffects !== 'undefined') {
+          SoundEffects.setVolume(level);
+        }
+        notifyListeners();
+        break;
+      }
+
+      case 'SET_BRAND_LOGO':
+        // Empty string clears; otherwise logo lives in localStorage (payload may omit data)
+        if (msg.clear) {
+          state.brandLogo = '';
+          writeStoredBrandLogo('');
+        } else if (typeof msg.dataUrl === 'string' && msg.dataUrl) {
+          state.brandLogo = msg.dataUrl;
+          writeStoredBrandLogo(msg.dataUrl);
+        } else {
+          state.brandLogo = readStoredBrandLogo();
+        }
+        notifyListeners();
+        break;
+
+      case 'SET_SOUND_OVERRIDE':
+        if (typeof SoundEffects !== 'undefined') {
+          if (msg.clearAll) {
+            SoundEffects.clearAllOverrides();
+          } else if (msg.clear && msg.name) {
+            SoundEffects.clearOverride(msg.name);
+          } else if (msg.name && msg.dataUrl) {
+            SoundEffects.setOverride(msg.name, msg.dataUrl);
+          } else {
+            // Peer wrote to localStorage — reload
+            SoundEffects.reloadOverridesFromStorage();
+          }
+        }
+        notifyListeners();
+        break;
+
+      case 'BUZZ_IN': {
+        // First buzz wins until reset — face-off lockout
+        if (state.buzzedFamily) break;
+        const family = msg.family === 2 ? 2 : 1;
+        state.buzzedFamily = family;
+        triggerLocalSound('buzz-in');
+        notifyListeners();
+        break;
+      }
+
+      case 'BUZZ_RESET':
+        state.buzzedFamily = 0;
+        notifyListeners();
+        break;
+
+      case 'SHOW_REVEAL_RANK':
+        state.revealRank = Math.max(1, parseInt(msg.rank, 10) || 1);
+        state.revealRankNonce = (state.revealRankNonce || 0) + 1;
+        notifyListeners();
+        break;
+
+      case 'HIDE_REVEAL_RANK':
+        state.revealRank = 0;
         notifyListeners();
         break;
 
@@ -366,7 +538,8 @@ const GameState = (() => {
         break;
 
       case 'FM_EXIT':
-        stopLocalSounds(['fm-20', 'fm-25', 'fm-closing-music', ...FM_REVEAL_SOUNDS, 'fm-win']);
+        fadeLocalSounds(['fm-20', 'fm-25'], 1400);
+        stopLocalSounds(['fm-closing-music', ...FM_REVEAL_SOUNDS, 'fm-win']);
         state.fastMoney = createEmptyFastMoneyState();
         state.gameStarted = false;
         notifyListeners();
@@ -435,8 +608,16 @@ const GameState = (() => {
           state.fastMoney.won = true;
           state.fastMoney.timerRunning = false;
           state.fastMoney.timerEndsAt = null;
-          // Interrupt / replace other Fast Money SFX with the win sting
-          stopLocalSounds(FM_REVEAL_SOUNDS);
+          // Soft-fade timer bed, cut short stingers, then play win
+          fadeLocalSounds(['fm-20', 'fm-25'], 1200);
+          stopLocalSounds([
+            'fm-you-said',
+            'fm-survey-correct',
+            'fm-survey-incorrect',
+            'fm-clock-appear',
+            'fm-next-contestant',
+            'fm-duplicate'
+          ]);
           triggerLocalSound('fm-win');
         }
         notifyListeners();
@@ -452,11 +633,12 @@ const GameState = (() => {
         state.fastMoney.timerRunning = true;
         // Bed music starts with a full countdown (not mid-timer resume)
         if (msg.playBed) {
-          stopLocalSounds(['fm-20', 'fm-25']);
-          if (duration === 25) {
-            triggerLocalSound('fm-25');
-          } else if (duration === 20) {
-            triggerLocalSound('fm-20');
+          // Quick fade previous bed, then start the new one
+          fadeLocalSounds(['fm-20', 'fm-25'], 400);
+          // Slight delay so fade isn't instantly cut by a same-tick play — play after microtask
+          const bed = duration === 25 ? 'fm-25' : duration === 20 ? 'fm-20' : null;
+          if (bed) {
+            setTimeout(() => triggerLocalSound(bed), 50);
           }
         }
         notifyListeners();
@@ -467,7 +649,7 @@ const GameState = (() => {
         state.fastMoney.timerRunning = false;
         state.fastMoney.timerEndsAt = null;
         state.fastMoney.timerRemaining = msg.remaining;
-        stopLocalSounds(['fm-20', 'fm-25']);
+        fadeLocalSounds(['fm-20', 'fm-25'], 1400);
         notifyListeners();
         break;
 
@@ -476,7 +658,7 @@ const GameState = (() => {
         state.fastMoney.timerEndsAt = null;
         state.fastMoney.timerDuration = msg.duration;
         state.fastMoney.timerRemaining = msg.duration;
-        stopLocalSounds(['fm-20', 'fm-25']);
+        fadeLocalSounds(['fm-20', 'fm-25'], 1000);
         notifyListeners();
         break;
 
@@ -520,7 +702,9 @@ const GameState = (() => {
 
   function broadcastFullState() {
     if (channel) {
-      channel.postMessage({ type: 'FULL_STATE', state: { ...state } });
+      // Omit brandLogo from the wire payload (can be multi-MB); peers read localStorage
+      const { brandLogo, ...rest } = state;
+      channel.postMessage({ type: 'FULL_STATE', state: { ...rest, brandLogo: '' } });
     }
   }
 
@@ -602,6 +786,85 @@ const GameState = (() => {
 
   function setRulesVisible(visible) {
     send({ type: 'SET_RULES_VISIBLE', visible });
+  }
+
+  function setCopyrightFree(enabled) {
+    send({ type: 'SET_COPYRIGHT_FREE', enabled: !!enabled });
+  }
+
+  function setVolume(volume) {
+    send({ type: 'SET_VOLUME', volume });
+  }
+
+  function setBrandLogo(dataUrl) {
+    if (!dataUrl) {
+      send({ type: 'SET_BRAND_LOGO', clear: true });
+      return { ok: true };
+    }
+    if (!writeStoredBrandLogo(dataUrl)) {
+      return { ok: false, error: 'Browser storage is full. Use a smaller image (under ~1.5 MB).' };
+    }
+    state.brandLogo = dataUrl;
+    // Notify peers to reload from localStorage (same origin)
+    if (channel) {
+      channel.postMessage({ type: 'SET_BRAND_LOGO' });
+    }
+    notifyListeners();
+    return { ok: true };
+  }
+
+  function clearBrandLogo() {
+    send({ type: 'SET_BRAND_LOGO', clear: true });
+  }
+
+  function setSoundOverride(name, dataUrl) {
+    if (typeof SoundEffects === 'undefined') {
+      return { ok: false, error: 'Sound system not ready' };
+    }
+    const result = SoundEffects.setOverride(name, dataUrl);
+    if (!result.ok) return result;
+    // Prefer localStorage sync — data URLs can be huge for BroadcastChannel
+    if (channel) {
+      channel.postMessage({ type: 'SET_SOUND_OVERRIDE' });
+    }
+    notifyListeners();
+    return result;
+  }
+
+  function clearSoundOverride(name) {
+    if (typeof SoundEffects === 'undefined') return { ok: true };
+    const result = SoundEffects.clearOverride(name);
+    if (channel) {
+      channel.postMessage({ type: 'SET_SOUND_OVERRIDE', clear: true, name });
+    }
+    notifyListeners();
+    return result;
+  }
+
+  function clearAllSoundOverrides() {
+    if (typeof SoundEffects === 'undefined') return { ok: true };
+    SoundEffects.clearAllOverrides();
+    if (channel) {
+      channel.postMessage({ type: 'SET_SOUND_OVERRIDE', clearAll: true });
+    }
+    notifyListeners();
+    return { ok: true };
+  }
+
+  function buzzIn(family) {
+    send({ type: 'BUZZ_IN', family });
+  }
+
+  function resetBuzz() {
+    send({ type: 'BUZZ_RESET' });
+  }
+
+  function showRevealRank(rank) {
+    send({ type: 'SHOW_REVEAL_RANK', rank });
+  }
+
+  function hideRevealRank() {
+    send({ type: 'HIDE_REVEAL_RANK' });
   }
 
   function triggerSound(soundName) {
@@ -708,6 +971,17 @@ const GameState = (() => {
     updateNames,
     broadcastFullState,
     setRulesVisible,
+    setCopyrightFree,
+    setVolume,
+    setBrandLogo,
+    clearBrandLogo,
+    setSoundOverride,
+    clearSoundOverride,
+    clearAllSoundOverrides,
+    buzzIn,
+    resetBuzz,
+    showRevealRank,
+    hideRevealRank,
     triggerSound,
     stopTriggerSound,
     stopAllTriggerSounds,

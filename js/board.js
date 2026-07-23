@@ -8,6 +8,7 @@ const Board = (() => {
   let els = {};
   let lastQuestionStr = null;
   let lastStrikeNonce = 0;
+  let lastRevealRankNonce = 0;
   let displayedTotal = 0;
   let totalAnimId = null;
   let timerRafId = null;
@@ -26,9 +27,12 @@ const Board = (() => {
       questionDisplay: document.getElementById('question-display'),
       answerGrid: document.getElementById('answer-grid'),
       strikeOverlay: document.getElementById('strike-overlay'),
+      revealRankOverlay: document.getElementById('reveal-rank-overlay'),
+      revealRankText: document.getElementById('reveal-rank-text'),
       boardFrame: document.getElementById('board-frame'),
       roundIndicator: document.getElementById('round-indicator'),
       welcomeState: document.getElementById('welcome-state'),
+      gameLogoText: document.getElementById('game-logo-text'),
       gameBoard: document.getElementById('game-board'),
       rulesState: document.getElementById('rules-state'),
       fastMoneyState: document.getElementById('fast-money-state'),
@@ -39,7 +43,11 @@ const Board = (() => {
       fmTotalValue: document.getElementById('fm-total-value'),
       fmWinOverlay: document.getElementById('fm-win-overlay'),
       topBar: document.querySelector('.top-bar'),
-      openAdminBtn: document.getElementById('open-admin-btn')
+      openAdminBtn: document.getElementById('open-admin-btn'),
+      teamPanelLeft: document.querySelector('.team-panel.left-flank'),
+      teamPanelRight: document.querySelector('.team-panel.right-flank'),
+      backdrop: document.querySelector('.backdrop'),
+      brandLayer: document.getElementById('brand-layer')
     };
 
     // Initialize game state listener
@@ -49,11 +57,18 @@ const Board = (() => {
     // Family name editing sync
     els.family1Name.addEventListener('change', syncNames);
     els.family2Name.addEventListener('change', syncNames);
+    els.family1Name.addEventListener('input', () => fitFamilyName(els.family1Name));
+    els.family2Name.addEventListener('input', () => fitFamilyName(els.family2Name));
+    window.addEventListener('resize', fitAllFamilyNames);
 
     // Show welcome state
     showWelcome();
     ensureFastMoneySlots();
     startBoardTimerLoop();
+    fitAllFamilyNames();
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(fitAllFamilyNames);
+    }
 
     // Admin button binding — always open from the board's HTTP origin
     // (avoids reusing a stale file:// AdminPanel window)
@@ -61,10 +76,117 @@ const Board = (() => {
       const adminUrl = new URL('admin.html', window.location.href).href;
       window.open(adminUrl, 'FamilyFeudAdmin', 'width=900,height=960,menubar=no,toolbar=no,location=yes,status=no');
     });
+
+    // Buzzers also work focused on the board window
+    document.addEventListener('keydown', (e) => {
+      const tag = (document.activeElement && document.activeElement.tagName) || '';
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      const key = e.key.toLowerCase();
+      if (key === 'q') {
+        e.preventDefault();
+        GameState.buzzIn(1);
+      } else if (key === 'e') {
+        e.preventDefault();
+        GameState.buzzIn(2);
+      } else if (key === 'w') {
+        e.preventDefault();
+        GameState.resetBuzz();
+      }
+    });
+
+    // Apply any persisted brand / title immediately
+    const initial = GameState.getState();
+    applyBranding(initial);
+    applyGameTitle(!!initial.copyrightFree);
+  }
+
+  function applyGameTitle(copyrightFree) {
+    const name = copyrightFree ? 'FAMILY SHOWDOWN' : 'FAMILY FEUD';
+    const titleName = copyrightFree ? 'Family Showdown' : 'Family Feud';
+    document.title = `${titleName} — Game Board`;
+    if (els.gameLogoText) els.gameLogoText.textContent = name;
+    document.body.classList.toggle('copyright-free', !!copyrightFree);
+  }
+
+  function applyBranding(state) {
+    const logo = state.brandLogo || '';
+    document.body.classList.toggle('has-brand-logo', !!logo);
+    const layer = els.brandLayer;
+    if (!layer) return;
+    if (logo) {
+      // Quote the data URL — unquoted base64 commas break CSS url()
+      layer.style.backgroundImage = `url("${logo.replace(/"/g, '\\"')}")`;
+    } else {
+      layer.style.backgroundImage = '';
+    }
+  }
+
+  function applyBuzzHighlight(buzzedFamily) {
+    if (els.teamPanelLeft) {
+      els.teamPanelLeft.classList.toggle('buzzed', buzzedFamily === 1);
+    }
+    if (els.teamPanelRight) {
+      els.teamPanelRight.classList.toggle('buzzed', buzzedFamily === 2);
+    }
+  }
+
+  function showRevealRank(rank, nonce) {
+    if (!els.revealRankOverlay || !els.revealRankText) return;
+    if (nonce === lastRevealRankNonce && els.revealRankOverlay.classList.contains('active')) return;
+    lastRevealRankNonce = nonce;
+    els.revealRankText.textContent = `#${rank}!`;
+    els.revealRankOverlay.classList.remove('active');
+    void els.revealRankOverlay.offsetWidth;
+    els.revealRankOverlay.classList.add('active');
+    els.revealRankOverlay.setAttribute('aria-hidden', 'false');
+  }
+
+  function hideRevealRank() {
+    if (!els.revealRankOverlay) return;
+    els.revealRankOverlay.classList.remove('active');
+    els.revealRankOverlay.setAttribute('aria-hidden', 'true');
   }
 
   function syncNames() {
     GameState.updateNames(els.family1Name.value, els.family2Name.value);
+    fitAllFamilyNames();
+  }
+
+  /** Shrink family name font until the text fits inside the name box. */
+  function fitFamilyName(inputEl) {
+    if (!inputEl || inputEl.clientWidth <= 0) return;
+
+    const maxRem = 1.2;
+    const minRem = 0.55;
+    const step = 0.05;
+    const available = inputEl.clientWidth - 2; // small safety margin against edge clip
+    const text = (inputEl.value || 'M').toUpperCase();
+    const style = getComputedStyle(inputEl);
+    const rootPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    const letterSpacing = parseFloat(style.letterSpacing) || 0;
+    const fontWeight = style.fontWeight || '800';
+    const fontFamily = style.fontFamily || 'sans-serif';
+
+    if (!fitFamilyName._ctx) {
+      fitFamilyName._ctx = document.createElement('canvas').getContext('2d');
+    }
+    const ctx = fitFamilyName._ctx;
+
+    let size = maxRem;
+    while (size > minRem) {
+      const px = size * rootPx;
+      ctx.font = `${fontWeight} ${px}px ${fontFamily}`;
+      const textWidth = ctx.measureText(text).width
+        + Math.max(0, text.length - 1) * letterSpacing;
+      if (textWidth <= available) break;
+      size = Math.max(minRem, +(size - step).toFixed(2));
+    }
+    inputEl.style.fontSize = `${size}rem`;
+  }
+
+  function fitAllFamilyNames() {
+    fitFamilyName(els.family1Name);
+    fitFamilyName(els.family2Name);
   }
 
   function hideAllBoardViews() {
@@ -215,6 +337,7 @@ const Board = (() => {
     if (document.activeElement !== els.family2Name) {
       els.family2Name.value = state.family2.name;
     }
+    fitAllFamilyNames();
 
     // Big strike overlay — cumulative Xs for strikes 1–3; single X for steal miss
     if (state.showStrike && state.strikeNonce !== lastStrikeNonce) {
@@ -223,6 +346,17 @@ const Board = (() => {
         ? 1
         : Math.max(1, Math.min(3, state.strikeCount || state.strikes || 1));
       showStrikes(overlayCount);
+    }
+
+    // Branding, title, buzzers, reveal-rank zoom
+    applyGameTitle(!!state.copyrightFree);
+    applyBranding(state);
+    applyBuzzHighlight(state.buzzedFamily || 0);
+
+    if (state.revealRank > 0) {
+      showRevealRank(state.revealRank, state.revealRankNonce || 0);
+    } else {
+      hideRevealRank();
     }
   }
 

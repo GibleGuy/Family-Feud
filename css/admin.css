@@ -1046,3 +1046,225 @@ label {
     font-variant-numeric: tabular-nums;
   }
 }
+
+/* ---------- Event Settings ---------- */
+.settings-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toggle-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle-label input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-ui {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 24px;
+  margin-top: 2px;
+  border-radius: 999px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  position: relative;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.toggle-ui::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--text-secondary);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.toggle-label input:checked + .toggle-ui {
+  background: rgba(16, 185, 129, 0.25);
+  border-color: var(--green);
+}
+
+.toggle-label input:checked + .toggle-ui::after {
+  transform: translateX(20px);
+  background: var(--green);
+}
+
+.toggle-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.toggle-text strong {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.toggle-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.brand-upload-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.brand-upload-row input[type="file"] {
+  flex: 1;
+  min-width: 180px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.brand-logo-preview {
+  margin-top: 10px;
+  height: 72px;
+  border-radius: 8px;
+  border: 1px dashed var(--border);
+  background-color: var(--bg-input);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+.buzzer-hint kbd {
+  display: inline-block;
+  padding: 1px 6px;
+  margin: 0 2px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85em;
+  color: var(--gold);
+}
+
+/* ---------- Volume slider ---------- */
+.volume-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.volume-row label {
+  flex: 0 0 auto;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.volume-row input[type="range"] {
+  flex: 1;
+  accent-color: var(--green);
+  cursor: pointer;
+}
+
+.volume-value {
+  flex: 0 0 3.2em;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+/* ---------- Custom SFX overrides ---------- */
+.custom-sfx-details {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+.custom-sfx-summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--text-primary);
+  list-style: none;
+}
+
+.custom-sfx-summary::-webkit-details-marker {
+  display: none;
+}
+
+.custom-sfx-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 360px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.custom-sfx-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+}
+
+.custom-sfx-row.has-override {
+  border-color: var(--green);
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.custom-sfx-name {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.custom-sfx-name strong {
+  font-size: 0.85rem;
+}
+
+.custom-sfx-key {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.custom-sfx-badge {
+  display: inline-block;
+  margin-top: 2px;
+  width: fit-content;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--green);
+}
+
+.custom-sfx-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.custom-sfx-upload-label {
+  margin: 0;
+  cursor: pointer;
+}
+

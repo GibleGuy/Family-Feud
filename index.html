@@ -12,7 +12,9 @@
 <body>
 
   <!-- ===== Background Spotlight overlay (full viewport; not scaled) ===== -->
-  <div class="backdrop"></div>
+  <div class="backdrop">
+    <div class="brand-layer" id="brand-layer" aria-hidden="true"></div>
+  </div>
 
   <!-- ===== Scaled stage: renders at 175% so 100% browser zoom matches prior 175% zoom ===== -->
   <div class="game-stage">
@@ -20,6 +22,11 @@
 
     <!-- ===== Strike Overlay ===== -->
     <div class="strike-overlay" id="strike-overlay"></div>
+
+    <!-- ===== Reveal-rank zoom (#N!) ===== -->
+    <div class="reveal-rank-overlay" id="reveal-rank-overlay" aria-hidden="true">
+      <div class="reveal-rank-text" id="reveal-rank-text">#1!</div>
+    </div>
 
     <!-- ===== Top Bar: Bank & Admin Button ===== -->
     <div class="top-bar">
@@ -63,7 +70,7 @@
 
         <!-- Welcome / Idle State -->
         <div class="welcome-state" id="welcome-state">
-          <div class="logo-text">FAMILY FEUD</div>
+          <div class="logo-text" id="game-logo-text">FAMILY FEUD</div>
           <div class="welcome-divider">
             <span class="dot"></span>
             <span class="line"></span>

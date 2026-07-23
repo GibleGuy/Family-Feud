@@ -9,6 +9,7 @@ const Admin = (() => {
   let currentQuestionData = null;
   let currentRound = 1;
   let questionLoaded = false;
+  let revealAllRunning = false;
 
   // DOM references
   let els = {};
@@ -50,7 +51,16 @@ const Admin = (() => {
       resetGameBtn: document.getElementById('reset-game-btn'),
       rulesToggleSection: document.getElementById('rules-toggle-section'),
       toggleRulesBtn: document.getElementById('toggle-rules-btn'),
-      stopAllSoundsBtn: document.getElementById('stop-all-sounds-btn')
+      stopAllSoundsBtn: document.getElementById('stop-all-sounds-btn'),
+      copyrightFreeToggle: document.getElementById('copyright-free-toggle'),
+      brandLogoInput: document.getElementById('brand-logo-input'),
+      brandLogoClearBtn: document.getElementById('brand-logo-clear-btn'),
+      brandLogoPreview: document.getElementById('brand-logo-preview'),
+      adminGameTitle: document.getElementById('admin-game-title'),
+      volumeSlider: document.getElementById('volume-slider'),
+      volumeValue: document.getElementById('volume-value'),
+      customSfxList: document.getElementById('custom-sfx-list'),
+      clearAllSfxBtn: document.getElementById('clear-all-sfx-overrides-btn')
     };
 
     GameState.init('admin');
@@ -59,9 +69,21 @@ const Admin = (() => {
     setupFileUpload();
     setupRoundTabs();
     setupControls();
+    setupEventSettings();
+    setupBuzzers();
+    renderCustomSfxList();
 
     selectRound(1, { commit: false });
     autoLoadCSVs();
+
+    // Sync toggles from restored state
+    const initial = GameState.getState();
+    if (els.copyrightFreeToggle) {
+      els.copyrightFreeToggle.checked = !!initial.copyrightFree;
+    }
+    applyGameTitle(!!initial.copyrightFree);
+    updateBrandPreview(initial.brandLogo);
+    syncVolumeUI(initial.volume);
   }
 
   // ==================== AUTO LOAD ====================
@@ -298,14 +320,10 @@ const Admin = (() => {
       });
     }
 
-    // Reveal all remaining
+    // Reveal all remaining — largest rank → smallest, with zoom + pause
     els.revealAllBtn.addEventListener('click', () => {
-      const state = GameState.getState();
-      state.answers.forEach((a, idx) => {
-        if (!a.revealed) {
-          setTimeout(() => GameState.revealAnswer(idx), idx * 300);
-        }
-      });
+      if (revealAllRunning) return;
+      runRevealAllRemaining();
     });
 
     // Score override
@@ -347,6 +365,243 @@ const Admin = (() => {
     els.stopAllSoundsBtn.addEventListener('click', () => {
       GameState.stopAllTriggerSounds();
     });
+
+    if (els.volumeSlider) {
+      const pushVolume = () => {
+        const pct = parseInt(els.volumeSlider.value, 10);
+        const level = (Number.isFinite(pct) ? pct : 70) / 100;
+        if (els.volumeValue) els.volumeValue.textContent = `${Math.round(level * 100)}%`;
+        GameState.setVolume(level);
+      };
+      els.volumeSlider.addEventListener('input', pushVolume);
+      els.volumeSlider.addEventListener('change', pushVolume);
+    }
+  }
+
+  function syncVolumeUI(volume) {
+    const level = typeof volume === 'number' ? volume : 0.7;
+    const pct = Math.round(Math.max(0, Math.min(1, level)) * 100);
+    if (els.volumeSlider && document.activeElement !== els.volumeSlider) {
+      els.volumeSlider.value = String(pct);
+    }
+    if (els.volumeValue) els.volumeValue.textContent = `${pct}%`;
+  }
+
+  function applyGameTitle(copyrightFree) {
+    const name = copyrightFree ? 'Family Showdown' : 'Family Feud';
+    document.title = `${name} — Admin Panel`;
+    if (els.adminGameTitle) {
+      els.adminGameTitle.textContent = `🎯 ${name} — Host Panel`;
+    }
+  }
+
+  function updateBrandPreview(dataUrl) {
+    if (!els.brandLogoPreview) return;
+    if (dataUrl) {
+      els.brandLogoPreview.classList.remove('hidden');
+      els.brandLogoPreview.style.backgroundImage = `url("${String(dataUrl).replace(/"/g, '\\"')}")`;
+    } else {
+      els.brandLogoPreview.classList.add('hidden');
+      els.brandLogoPreview.style.backgroundImage = '';
+    }
+  }
+
+  /** Downscale large images so localStorage can hold them. */
+  function compressImageFile(file, maxEdge = 1600, quality = 0.82) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error('Could not read image'));
+      reader.onload = () => {
+        const img = new Image();
+        img.onerror = () => reject(new Error('Invalid image'));
+        img.onload = () => {
+          let { width, height } = img;
+          const scale = Math.min(1, maxEdge / Math.max(width, height));
+          width = Math.max(1, Math.round(width * scale));
+          height = Math.max(1, Math.round(height * scale));
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          const prefersPng = /png|webp|svg/i.test(file.type) || /\.png$/i.test(file.name);
+          const dataUrl = prefersPng
+            ? canvas.toDataURL('image/png')
+            : canvas.toDataURL('image/jpeg', quality);
+          resolve(dataUrl);
+        };
+        img.src = String(reader.result);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function setupEventSettings() {
+    if (els.copyrightFreeToggle) {
+      els.copyrightFreeToggle.addEventListener('change', () => {
+        const on = els.copyrightFreeToggle.checked;
+        GameState.setCopyrightFree(on);
+        applyGameTitle(on);
+      });
+    }
+
+    if (els.brandLogoInput) {
+      els.brandLogoInput.addEventListener('change', async () => {
+        const file = els.brandLogoInput.files && els.brandLogoInput.files[0];
+        if (!file) return;
+        try {
+          const dataUrl = await compressImageFile(file);
+          const result = GameState.setBrandLogo(dataUrl);
+          if (!result || !result.ok) {
+            alert((result && result.error) || 'Could not save logo.');
+            return;
+          }
+          updateBrandPreview(dataUrl);
+        } catch (err) {
+          console.warn(err);
+          alert('Could not process that image. Try a PNG or JPG under 2 MB.');
+        }
+      });
+    }
+
+    if (els.brandLogoClearBtn) {
+      els.brandLogoClearBtn.addEventListener('click', () => {
+        GameState.clearBrandLogo();
+        updateBrandPreview('');
+        if (els.brandLogoInput) els.brandLogoInput.value = '';
+      });
+    }
+  }
+
+  function renderCustomSfxList() {
+    if (!els.customSfxList || typeof SoundEffects === 'undefined') return;
+    const keys = SoundEffects.getSoundKeys();
+    els.customSfxList.innerHTML = '';
+
+    keys.forEach((key) => {
+      const row = document.createElement('div');
+      row.className = 'custom-sfx-row';
+      const overridden = SoundEffects.hasOverride(key);
+      row.classList.toggle('has-override', overridden);
+
+      row.innerHTML = `
+        <div class="custom-sfx-name">
+          <strong>${SoundEffects.getSoundLabel(key)}</strong>
+          <span class="custom-sfx-key">${key}</span>
+          ${overridden ? '<span class="custom-sfx-badge">Custom</span>' : ''}
+        </div>
+        <div class="custom-sfx-actions">
+          <button type="button" class="btn btn-sm custom-sfx-play" data-sound="${key}">▶</button>
+          <label class="btn btn-sm btn-blue custom-sfx-upload-label">
+            Upload
+            <input type="file" accept="audio/mpeg,audio/mp3,audio/wav,audio/x-wav,.mp3,.wav" hidden data-sound="${key}">
+          </label>
+          <button type="button" class="btn btn-sm btn-orange custom-sfx-clear" data-sound="${key}" ${overridden ? '' : 'disabled'}>Clear</button>
+        </div>
+      `;
+
+      row.querySelector('.custom-sfx-play').addEventListener('click', () => {
+        GameState.triggerSound(key);
+      });
+
+      const fileInput = row.querySelector('input[type="file"]');
+      fileInput.addEventListener('change', () => {
+        const file = fileInput.files && fileInput.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          const dataUrl = String(reader.result || '');
+          const result = GameState.setSoundOverride(key, dataUrl);
+          if (!result.ok) {
+            alert(result.error || 'Could not save sound.');
+            fileInput.value = '';
+            return;
+          }
+          renderCustomSfxList();
+        };
+        reader.onerror = () => alert('Could not read that audio file.');
+        reader.readAsDataURL(file);
+      });
+
+      row.querySelector('.custom-sfx-clear').addEventListener('click', () => {
+        GameState.clearSoundOverride(key);
+        renderCustomSfxList();
+      });
+
+      els.customSfxList.appendChild(row);
+    });
+
+    if (els.clearAllSfxBtn && !els.clearAllSfxBtn._bound) {
+      els.clearAllSfxBtn._bound = true;
+      els.clearAllSfxBtn.addEventListener('click', () => {
+        if (!confirm('Clear all custom sound replacements?')) return;
+        GameState.clearAllSoundOverrides();
+        renderCustomSfxList();
+      });
+    }
+  }
+
+  function setupBuzzers() {
+    document.addEventListener('keydown', (e) => {
+      const tag = (document.activeElement && document.activeElement.tagName) || '';
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      const key = e.key.toLowerCase();
+      if (key === 'q') {
+        e.preventDefault();
+        GameState.buzzIn(1);
+      } else if (key === 'e') {
+        e.preventDefault();
+        GameState.buzzIn(2);
+      } else if (key === 'w') {
+        e.preventDefault();
+        GameState.resetBuzz();
+      }
+    });
+  }
+
+  function wait(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  async function runRevealAllRemaining() {
+    const state = GameState.getState();
+    const pending = state.answers
+      .map((a, idx) => ({ idx, revealed: a.revealed }))
+      .filter(a => !a.revealed)
+      .sort((a, b) => b.idx - a.idx); // largest number → smallest
+
+    if (!pending.length) return;
+
+    revealAllRunning = true;
+    if (els.revealAllBtn) {
+      els.revealAllBtn.disabled = true;
+      els.revealAllBtn.textContent = '⏳ Revealing…';
+    }
+
+    try {
+      for (const item of pending) {
+        // Bail if host reset / left the question
+        const live = GameState.getState();
+        if (!live.gameStarted || !live.answers[item.idx] || live.answers[item.idx].revealed) {
+          continue;
+        }
+
+        const rank = item.idx + 1;
+        GameState.showRevealRank(rank);
+        await wait(1600); // zoom in / hold
+        GameState.hideRevealRank();
+        await wait(200);
+        GameState.revealAnswer(item.idx);
+        await wait(4000); // let host & audience read it
+      }
+    } finally {
+      GameState.hideRevealRank();
+      revealAllRunning = false;
+      if (els.revealAllBtn) {
+        els.revealAllBtn.disabled = false;
+        els.revealAllBtn.textContent = '👁 Reveal All Remaining';
+      }
+    }
   }
 
   // ==================== RENDER ====================
@@ -455,7 +710,9 @@ const Admin = (() => {
     if (els.removeStrikeBtn) els.removeStrikeBtn.disabled = rawStrikes <= 0;
 
     // Update status bar
-    els.statusRound.textContent = `Round ${state.currentRound}`;
+    if (!state.fastMoney || !state.fastMoney.active) {
+      els.statusRound.textContent = `Round ${state.currentRound}`;
+    }
     els.statusF1.textContent = `${state.family1.name}: ${state.family1.score}`;
     els.statusF2.textContent = `${state.family2.name}: ${state.family2.score}`;
 
@@ -498,6 +755,14 @@ const Admin = (() => {
     // Update award button labels
     els.awardFamily1Btn.textContent = `Award to ${state.family1.name}`;
     els.awardFamily2Btn.textContent = `Award to ${state.family2.name}`;
+
+    // Copyright-free title + toggle
+    if (els.copyrightFreeToggle && document.activeElement !== els.copyrightFreeToggle) {
+      els.copyrightFreeToggle.checked = !!state.copyrightFree;
+    }
+    applyGameTitle(!!state.copyrightFree);
+    updateBrandPreview(state.brandLogo);
+    syncVolumeUI(state.volume);
 
     // Update admin answer buttons revealed state
     if (questionLoaded) {

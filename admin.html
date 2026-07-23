@@ -11,7 +11,7 @@
 
   <!-- ===== Header ===== -->
   <header class="admin-header">
-    <h1>🎯 Family Feud — Host Panel</h1>
+    <h1 id="admin-game-title">🎯 Family Feud — Host Panel</h1>
     <p class="subtitle">Control the game board from here. The audience doesn't see this window.</p>
   </header>
 
@@ -25,6 +25,47 @@
       <span id="status-f1">Family 1: 0</span>
       <span>|</span>
       <span id="status-f2">Family 2: 0</span>
+    </div>
+  </div>
+
+  <!-- ===== Event Settings (copyright-free, brand, buzzers) ===== -->
+  <div class="section" id="event-settings-section">
+    <div class="section-title">
+      <span class="icon">⚙️</span> Event Settings
+    </div>
+
+    <div class="settings-row">
+      <label class="toggle-label" for="copyright-free-toggle">
+        <input type="checkbox" id="copyright-free-toggle">
+        <span class="toggle-ui" aria-hidden="true"></span>
+        <span class="toggle-text">
+          <strong>Copyright-free mode</strong>
+          <span class="toggle-hint">Uses royalty-free SFX and renames the show to Family Showdown</span>
+        </span>
+      </label>
+    </div>
+
+    <div class="settings-row mt-12">
+      <div class="select-wrap" style="flex: 1;">
+        <label for="brand-logo-input">Corporate logo / background</label>
+        <div class="brand-upload-row">
+          <input type="file" id="brand-logo-input" accept="image/*">
+          <button type="button" class="btn btn-sm" id="brand-logo-clear-btn">Clear logo</button>
+        </div>
+        <div class="drop-hint" style="margin-top: 6px;">Shown behind the board as a watermark. Large images are auto-resized — prefer PNG/JPG under ~2 MB.</div>
+        <div id="brand-logo-preview" class="brand-logo-preview hidden"></div>
+      </div>
+    </div>
+
+    <div class="settings-row mt-12 buzzer-hint">
+      <strong>Buzzers</strong>
+      <span class="toggle-hint">
+        Map wireless buzzers to keys:
+        <kbd>Q</kbd> left family ·
+        <kbd>E</kbd> right family ·
+        <kbd>W</kbd> reset.
+        First buzz locks until reset; that family’s side lights up on the board.
+      </span>
     </div>
   </div>
 
@@ -340,6 +381,11 @@
     <div class="section-title">
       <span class="icon">🔊</span> Soundboard Controls
     </div>
+    <div class="volume-row">
+      <label for="volume-slider">Volume</label>
+      <input type="range" id="volume-slider" min="0" max="100" value="70" step="1">
+      <span id="volume-value" class="volume-value">70%</span>
+    </div>
     <div class="soundboard-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
       <button class="btn sound-btn" data-sound="intro" style="padding: 10px; font-weight: bold; background: #333; color: white; border: 1px solid #555; border-radius: 4px; cursor: pointer;">🎶 Intro Theme</button>
       <button class="btn sound-btn" data-sound="new-round" style="padding: 10px; font-weight: bold; background: #333; color: white; border: 1px solid #555; border-radius: 4px; cursor: pointer;">🔔 New Round</button>
@@ -350,6 +396,18 @@
     <div class="controls-row mt-12" style="justify-content: flex-end;">
       <button class="btn btn-red btn-sm" id="stop-all-sounds-btn" style="padding: 8px 12px; font-weight: bold; border-radius: 4px; cursor: pointer;">🛑 Stop Playback</button>
     </div>
+
+    <details class="custom-sfx-details mt-12">
+      <summary class="custom-sfx-summary">Replace any sound (MP3 / WAV)</summary>
+      <p class="toggle-hint" style="margin: 8px 0 12px;">
+        Upload a custom file for any cue. Overrides both regular and copyright-free packs until cleared.
+        Large files may not fit in browser storage — keep clips short when possible.
+      </p>
+      <div id="custom-sfx-list" class="custom-sfx-list"></div>
+      <div class="controls-row mt-12">
+        <button type="button" class="btn btn-orange btn-sm" id="clear-all-sfx-overrides-btn">Clear all custom sounds</button>
+      </div>
+    </details>
   </div>
 
   <!-- ===== Host Cue Cards (print only) ===== -->
